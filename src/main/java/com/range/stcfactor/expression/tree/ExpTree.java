@@ -11,7 +11,7 @@ import org.apache.commons.collections4.CollectionUtils;
 public class ExpTree {
 
     private int depth;
-    private ExpTreeNode<FunctionInfo> root;
+    private ExpTreeNode<ExpModel> root;
 
     public ExpTree(int depth) {
         this.depth = depth;
@@ -25,11 +25,11 @@ public class ExpTree {
         this.depth = depth;
     }
 
-    public ExpTreeNode<FunctionInfo> getRoot() {
+    public ExpTreeNode<ExpModel> getRoot() {
         return root;
     }
 
-    public void setRoot(ExpTreeNode<FunctionInfo> root) {
+    public void setRoot(ExpTreeNode<ExpModel> root) {
         this.root = root;
     }
 
@@ -65,12 +65,12 @@ public class ExpTree {
      * @param node 节点
      * @param sb 公式字符串
      */
-    private void obtainExpression(ExpTreeNode<FunctionInfo> node, StringBuilder sb) {
-        sb.append(node.getData().getFunctionName());
+    private void obtainExpression(ExpTreeNode<ExpModel> node, StringBuilder sb) {
+        sb.append(node.getData().getModelName());
         if (CollectionUtils.isNotEmpty(node.getChildNodes())) {
             sb.append("(");
             int index = 0;
-            for (ExpTreeNode<FunctionInfo> n : node.getChildNodes()) {
+            for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {
                 obtainExpression(n, sb);
                 if (++index < node.getChildNodes().size()) {
                     sb.append(",");

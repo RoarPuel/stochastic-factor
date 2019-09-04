@@ -1,6 +1,9 @@
 package com.range.stcfactor.signal.data;
 
-import tech.tablesaw.api.Table;
+import com.range.stcfactor.expression.ExpVariables;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 数据
@@ -10,41 +13,19 @@ import tech.tablesaw.api.Table;
  */
 public class DataModel {
 
-    private Table openTable;
-    private Table highTable;
-    private Table lowTable;
-    private Table closeTable;
+    private Map<ExpVariables, Object> datas;
 
-    public Table getOpenTable() {
-        return openTable;
+    public DataModel() {
+        datas = new HashMap<>();
     }
 
-    public void setOpenTable(Table openTable) {
-        this.openTable = openTable;
+    public void setData(ExpVariables var, Object data) {
+        this.datas.put(var, data);
     }
 
-    public Table getHighTable() {
-        return highTable;
+    public Object getData(ExpVariables var) {
+        return this.datas.get(var);
     }
 
-    public void setHighTable(Table highTable) {
-        this.highTable = highTable;
-    }
-
-    public Table getLowTable() {
-        return lowTable;
-    }
-
-    public void setLowTable(Table lowTable) {
-        this.lowTable = lowTable;
-    }
-
-    public Table getCloseTable() {
-        return closeTable;
-    }
-
-    public void setCloseTable(Table closeTable) {
-        this.closeTable = closeTable;
-    }
 
 }

@@ -5,13 +5,7 @@ import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.SignalGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.tablesaw.api.ColumnType;
-import tech.tablesaw.api.Table;
-import tech.tablesaw.columns.Column;
-import tech.tablesaw.columns.strings.StringColumnType;
-import tech.tablesaw.io.csv.CsvReadOptions;
 
-import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
 
@@ -43,17 +37,16 @@ public class AppLauncher {
 
     private static Properties initConfig() {
         Properties config = new Properties();
-        config.put(ConfigConstant.EXP_TOTAL, "10");
-        config.put(ConfigConstant.EXP_DEPTH_MIN, "2");
-        config.put(ConfigConstant.EXP_DEPTH_MAX, "3");
+        config.put(Constant.EXP_TOTAL, "1");
+        config.put(Constant.EXP_DEPTH_MIN, "2");
+        config.put(Constant.EXP_DEPTH_MAX, "4");
 
-        config.put(ConfigConstant.DATA_DATE_START, "2019-01-01");
-        config.put(ConfigConstant.DATA_DATE_END, "2019-12-31");
+        config.put(Constant.DATA_DATE_NUM, "5");
 
-        config.put(ConfigConstant.DATA_PATH_OPEN, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
-        config.put(ConfigConstant.DATA_PATH_HIGH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\high.csv");
-        config.put(ConfigConstant.DATA_PATH_LOW, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\low.csv");
-        config.put(ConfigConstant.DATA_PATH_CLOSE, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
+        config.put(Constant.DATA_PATH_OPEN, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
+        config.put(Constant.DATA_PATH_HIGH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\high.csv");
+        config.put(Constant.DATA_PATH_LOW, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\low.csv");
+        config.put(Constant.DATA_PATH_CLOSE, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
         return config;
     }
 

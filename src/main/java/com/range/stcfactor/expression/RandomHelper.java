@@ -1,6 +1,5 @@
 package com.range.stcfactor.expression;
 
-import com.range.stcfactor.expression.tree.FunctionInfo;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,16 +29,10 @@ public class RandomHelper {
         return RandomUtils.nextInt(minInclusive, maxExclusive + 1);
     }
 
-    public static FunctionInfo getRandomFunction(List<FunctionInfo> functionInfos) {
-        Collections.shuffle(functionInfos);
-        int index = (int) (RandomUtils.nextDouble(0, 1) * functionInfos.size());
-        return functionInfos.get(index);
-    }
-
-    public static ExpVariables getRandomVariable(List<ExpVariables> variables) {
-        Collections.shuffle(variables);
-        int index = (int) (RandomUtils.nextDouble(0, 1) * variables.size());
-        return variables.get(index);
+    public static <T> T getRandomInfos(List<T> infos) {
+        Collections.shuffle(infos);
+        int index = (int) (RandomUtils.nextDouble(0, 1) * infos.size());
+        return infos.get(index);
     }
 
 }

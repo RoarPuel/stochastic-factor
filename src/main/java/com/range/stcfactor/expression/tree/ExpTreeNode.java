@@ -31,6 +31,11 @@ public class ExpTreeNode<T> {
 
     @Override
     public String toString() {
-        return "data:[" + data + "], child nodes size:[" + childNodes.size() + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append(data)
+                .append("(");
+        childNodes.forEach(node -> sb.append(node.getData()));
+        sb.append(")");
+        return sb.toString();
     }
 }

@@ -1,9 +1,9 @@
 package com.range.stcfactor.expression;
 
-import com.range.stcfactor.ConfigConstant;
+import com.range.stcfactor.Constant;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeFactory;
-import com.range.stcfactor.expression.tree.FunctionInfo;
+import com.range.stcfactor.expression.tree.ExpModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,55 +25,95 @@ public class ExpGenerator {
 
     public ExpGenerator(Properties config) {
         this.config = config;
-        factory = new ExpTreeFactory(initFunctions(), initVariables(), initWeights());
+        factory = new ExpTreeFactory(initModels(),
+                                    initFunctions(),
+                                    initVariables(),
+                                    initWeights());
+    }
+
+    /**
+     * 初始化获取所有自定义函数、变量
+     * @return 自定义函数、变量列表
+     */
+    private Map<Class, List<ExpModel>> initModels() {
+        Map<Class, List<ExpModel>> models = new HashMap<>();
+
+        Method[] methods = ExpFunctions.class.getDeclaredMethods();
+        for (Method method : methods) {
+            Class returnType = method.getReturnType();
+            ExpModel expModel = new ExpModel(method.getName(), method.getParameterTypes(), returnType);
+            putMap(models, returnType, expModel);
+        }
+        for (ExpVariables var : ExpVariables.values()) {
+            Class returnType = var.getParameterType();
+            ExpModel expModel = new ExpModel(var.name(), null, returnType);
+            putMap(models, returnType, expModel);
+        }
+
+        logger.info("Success obtain infos, size: {}.", models.size());
+        return models;
     }
 
     /**
      * 初始化获取所有自定义函数
      * @return 自定义函数列表
      */
-    private Map<Class, List<FunctionInfo>> initFunctions() {
-        Map<Class, List<FunctionInfo>> functions = new HashMap<>();
+    private Map<Class, List<ExpModel>> initFunctions() {
+        Map<Class, List<ExpModel>> functions = new HashMap<>();
+
         Method[] methods = ExpFunctions.class.getDeclaredMethods();
         for (Method method : methods) {
-            Class type = method.getReturnType();
-            FunctionInfo functionInfo = new FunctionInfo(method.getName(), method.getParameterTypes(), type);
-
-            List<FunctionInfo> list = functions.get(type);
-            if (list == null) {
-                list = new ArrayList<>();
-                list.add(functionInfo);
-                functions.put(type, list);
-            } else {
-                list.add(functionInfo);
-            }
+            Class returnType = method.getReturnType();
+            ExpModel expModel = new ExpModel(method.getName(), method.getParameterTypes(), returnType);
+            putMap(functions, returnType, expModel);
         }
-        logger.info("Success obtain functions size: {}.", functions.size());
+
+        logger.info("Success obtain functions, size: {}.", functions.size());
         return functions;
     }
 
     /**
-     * 初始化获取所有变量名
-     * @return 变量名列表
+     * 初始化获取所有变量
+     * @return 变量列表
      */
-    private List<ExpVariables> initVariables() {
-        return Arrays.asList(ExpVariables.values());
+    private Map<Class, List<ExpModel>> initVariables() {
+        Map<Class, List<ExpModel>> variables = new HashMap<>();
+
+        for (ExpVariables var : ExpVariables.values()) {
+            Class returnType = var.getParameterType();
+            ExpModel expModel = new ExpModel(var.name(), null, returnType);
+            putMap(variables, returnType, expModel);
+        }
+
+        logger.info("Success obtain variables, size: {}.", variables.size());
+        return variables;
+    }
+
+    private void putMap(Map<Class, List<ExpModel>> map, Class key, ExpModel value) {
+        List<ExpModel> list = map.get(key);
+        if (list == null) {
+            list = new ArrayList<>();
+            list.add(value);
+            map.put(key, list);
+        } else {
+            list.add(value);
+        }
     }
 
     /**
      * 初始化自定义函数权重
      * @return 自定义函数权重
      */
-    private Map<FunctionInfo, Double> initWeights() {
-        Map<FunctionInfo, Double> weights = new HashMap<>();
+    private Map<ExpModel, Double> initWeights() {
+        Map<ExpModel, Double> weights = new HashMap<>();
         logger.info("Success obtain weights size: {}.", weights.size());
         return weights;
     }
 
     public Set<ExpTree> generateRandomExpression() {
-        int total = Integer.parseInt(config.getProperty(ConfigConstant.EXP_TOTAL, "10"));
-        int depthMin = Integer.parseInt(config.getProperty(ConfigConstant.EXP_DEPTH_MIN, "2"));
-        int depthMax = Integer.parseInt(config.getProperty(ConfigConstant.EXP_DEPTH_MAX, "3"));
+        int total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, "10"));
+        int depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, "2"));
+        int depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, "3"));
         return generateRandomExpression(total, depthMin, depthMax);
     }
 
@@ -88,7 +128,7 @@ public class ExpGenerator {
         Set<ExpTree> exps = new HashSet<>(total);
         logger.info("Start build expression tree. total: {}, depthMin: {}, depthMax: {}.", total, depthMin, depthMax);
         for (int i=0; i<total; i++) {
-            exps.add(factory.buildRandom(depthMin, depthMax));
+            exps.add(factory.buildRandom(depthMin, depthMax, Constant.DEFAULT_TYPE));
         }
         return exps;
     }
