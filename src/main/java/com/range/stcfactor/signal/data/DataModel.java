@@ -19,7 +19,7 @@ public class DataModel {
         datas = new HashMap<>();
     }
 
-    public void setData(ExpVariables var, Object data) {
+    public void putData(ExpVariables var, Object data) {
         this.datas.put(var, data);
     }
 
