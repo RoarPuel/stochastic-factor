@@ -1,4 +1,4 @@
-package com.range.stcfactor;
+package com.range.stcfactor.common;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 
@@ -17,10 +17,6 @@ public class Constant {
     public static final String EXP_DEPTH_MIN = "exp.depth.min";
 
     public static final String DATA_DATE_NUM = "data.date.num";
-
-    public static final String DATA_PATH_OPEN = "data.path.open";
-    public static final String DATA_PATH_HIGH = "data.path.high";
-    public static final String DATA_PATH_LOW = "data.path.low";
-    public static final String DATA_PATH_CLOSE = "data.path.close";
+    public static final String DATA_FILE_PATH = "data.file.path";
 
 }

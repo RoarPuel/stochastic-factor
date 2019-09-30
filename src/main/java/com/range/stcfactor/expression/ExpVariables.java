@@ -1,6 +1,6 @@
 package com.range.stcfactor.expression;
 
-import com.range.stcfactor.Constant;
+import com.range.stcfactor.common.Constant;
 
 /**
  * 通用变量
@@ -44,6 +44,36 @@ public enum ExpVariables {
      * close
      */
     close {
+        @Override
+        public Class getParameterType() {
+            return Constant.DEFAULT_TYPE;
+        }
+    },
+
+    /**
+     * vol
+     */
+    vol {
+        @Override
+        public Class getParameterType() {
+            return Constant.DEFAULT_TYPE;
+        }
+    },
+
+    /**
+     * share
+     */
+    share {
+        @Override
+        public Class getParameterType() {
+            return Constant.DEFAULT_TYPE;
+        }
+    },
+
+    /**
+     * turnover
+     */
+    turnover {
         @Override
         public Class getParameterType() {
             return Constant.DEFAULT_TYPE;

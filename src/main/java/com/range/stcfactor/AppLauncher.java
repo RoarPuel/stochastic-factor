@@ -1,5 +1,6 @@
 package com.range.stcfactor;
 
+import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.expression.ExpGenerator;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.SignalGenerator;
@@ -41,12 +42,8 @@ public class AppLauncher {
         config.put(Constant.EXP_DEPTH_MIN, "2");
         config.put(Constant.EXP_DEPTH_MAX, "4");
 
-        config.put(Constant.DATA_DATE_NUM, "5");
-
-        config.put(Constant.DATA_PATH_OPEN, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
-        config.put(Constant.DATA_PATH_HIGH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\high.csv");
-        config.put(Constant.DATA_PATH_LOW, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\low.csv");
-        config.put(Constant.DATA_PATH_CLOSE, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
+        config.put(Constant.DATA_DATE_NUM, "1");
+        config.put(Constant.DATA_FILE_PATH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\{0}.csv");
         return config;
     }
 

@@ -1,6 +1,6 @@
 package com.range.stcfactor.expression;
 
-import com.range.stcfactor.Constant;
+import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeFactory;
 import com.range.stcfactor.expression.tree.ExpModel;
