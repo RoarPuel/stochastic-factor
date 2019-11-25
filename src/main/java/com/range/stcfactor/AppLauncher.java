@@ -39,10 +39,10 @@ public class AppLauncher {
     private static Properties initConfig() {
         Properties config = new Properties();
         config.put(Constant.EXP_TOTAL, "1");
-        config.put(Constant.EXP_DEPTH_MIN, "2");
-        config.put(Constant.EXP_DEPTH_MAX, "4");
+        config.put(Constant.EXP_DEPTH_MIN, "3");
+        config.put(Constant.EXP_DEPTH_MAX, "5");
 
-        config.put(Constant.DATA_DATE_NUM, "1");
+        config.put(Constant.DATA_DATE_NUM, "2");
         config.put(Constant.DATA_FILE_PATH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\{0}.csv");
         return config;
     }

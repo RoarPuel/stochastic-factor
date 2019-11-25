@@ -1,4 +1,4 @@
-package com.range.stcfactor.common;
+package com.range.stcfactor.common.utils;
 
 /**
  * @author renjie.zhu@woqutech.com
