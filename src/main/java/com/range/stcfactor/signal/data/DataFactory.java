@@ -24,4 +24,8 @@ public class DataFactory {
         return dataModel.getData(ExpVariables.valueOf(variableName));
     }
 
+    public Object obtainData(ExpVariables variable) {
+        return dataModel.getData(variable);
+    }
+
 }

@@ -20,12 +20,17 @@ public class ExpGenerator {
 
     private static final Logger logger = LogManager.getLogger(ExpGenerator.class);
 
-    private Properties config;
+    private int total;
+    private int depthMin;
+    private int depthMax;
+
     private ExpTreeFactory factory;
 
     public ExpGenerator(Properties config) {
-        this.config = config;
-        factory = new ExpTreeFactory(initModels(),
+        this.total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, "10"));
+        this.depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, "2"));
+        this.depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, "3"));
+        this.factory = new ExpTreeFactory(initModels(),
                                     initFunctions(),
                                     initVariables(),
                                     initWeights());
@@ -111,9 +116,6 @@ public class ExpGenerator {
     }
 
     public Set<ExpTree> generateRandomExpression() {
-        int total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, "10"));
-        int depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, "2"));
-        int depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, "3"));
         return generateRandomExpression(total, depthMin, depthMax);
     }
 
@@ -124,7 +126,7 @@ public class ExpGenerator {
      * @param depthMax 随机公式树最小深度
      * @return 公式树集合
      */
-    public Set<ExpTree> generateRandomExpression(int total, int depthMin, int depthMax) {
+    private Set<ExpTree> generateRandomExpression(int total, int depthMin, int depthMax) {
         Set<ExpTree> exps = new HashSet<>(total);
         logger.info("Start build expression tree. total: {}, depthMin: {}, depthMax: {}.", total, depthMin, depthMax);
         for (int i=0; i<total; i++) {

@@ -69,6 +69,6 @@ public class ExpModel {
 
     @Override
     public String toString() {
-        return "[" + this.modelName + "]";
+        return this.modelName;
     }
 }

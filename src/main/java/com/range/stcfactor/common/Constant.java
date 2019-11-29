@@ -19,4 +19,7 @@ public class Constant {
     public static final String DATA_DATE_NUM = "data.date.num";
     public static final String DATA_FILE_PATH = "data.file.path";
 
+    public static final String THRESHOLD_INFORMATION_COEFFICIENT = "threshold.information.coefficient";
+    public static final String THRESHOLD_AUTO_CORRELATION = "threshold.auto.correlation";
+
 }

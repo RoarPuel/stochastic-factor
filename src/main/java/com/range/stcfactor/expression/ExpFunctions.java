@@ -1,14 +1,13 @@
 package com.range.stcfactor.expression;
 
 import com.range.stcfactor.common.utils.ArrayUtils;
-import org.nd4j.linalg.api.buffer.DataType;
+import com.range.stcfactor.common.helper.RollingArray;
+import com.range.stcfactor.common.helper.RollingDouble;
+import com.range.stcfactor.common.utils.FileUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.api.ops.impl.reduce.longer.MatchCondition;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.BooleanIndexing;
-import org.nd4j.linalg.indexing.NDArrayIndex;
-import org.nd4j.linalg.indexing.conditions.Conditions;
 import org.nd4j.linalg.ops.transforms.Transforms;
+
+import java.util.List;
 
 /**
  * 表达式
@@ -35,74 +34,23 @@ public class ExpFunctions {
     }
 
     public static INDArray tsSum(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).sum(0));
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.sum(0));
     }
 
     public static INDArray std(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).std(0));
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.std(0));
     }
 
     public static INDArray mean(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
+        return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.mean(0));
+    }
 
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).mean(0));
-        }
-        return result;
+    public static INDArray prod(INDArray arr, Integer dayNum) {
+        return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.prod(0));
     }
 
     public static INDArray tsMin(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                row.putColumn(i, column.min(0));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, ArrayUtils::min);
     }
 
     public static INDArray llv(INDArray arr, Integer dayNum) {
@@ -110,29 +58,7 @@ public class ExpFunctions {
     }
 
     public static INDArray tsMax(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                row.putColumn(i, column.max(0));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, ArrayUtils::max);
     }
 
     public static INDArray hhv(INDArray arr, Integer dayNum) {
@@ -140,85 +66,20 @@ public class ExpFunctions {
     }
 
     public static INDArray tsRank(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                int n = column.columns();
-                Integer[] sort = ArrayUtils.argSort(column);
-                INDArray arange = ArrayUtils.arange((double) n).add(1).div(n);
-                row.put(0, i, arange.getDouble(sort[sort.length-1]));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            double n = (double) array.columns();
+            Integer[] sort = ArrayUtils.argSort(array);
+            List<Double> range = ArrayUtils.range(0, n, 1.0, num -> (num + 1.0) / n);
+            return range.get(sort[sort.length-1]);
+        });
     }
 
     public static INDArray cov(INDArray arr1, INDArray arr2, Integer dayNum) {
-        long[] shape = {arr1.rows(), arr1.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr1.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp1 = arr1.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            INDArray temp2 = arr2.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp1.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp1.columns(); i++) {
-                INDArray column1 = temp1.getColumn(i);
-                INDArray column2 = temp2.getColumn(i);
-                double ans = (double) column1.sub(column1.meanNumber()).mul(column2.sub(column2.meanNumber())).sumNumber();
-                row.put(0, i, ans / (column1.columns() - 1));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr1, arr2, dayNum, ArrayUtils::cov);
     }
 
     public static INDArray corr(INDArray arr1, INDArray arr2, Integer dayNum) {
-        long[] shape = {arr1.rows(), arr1.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr1.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp1 = arr1.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            INDArray temp2 = arr2.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp1.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp1.columns(); i++) {
-                INDArray column1 = temp1.getColumn(i);
-                INDArray column2 = temp2.getColumn(i);
-                double ans = (double) column1.sub(column1.meanNumber()).mul(column2.sub(column2.meanNumber())).sumNumber();
-                INDArray columnSub1 = column1.sub(column1.meanNumber());
-                INDArray columnSub2 = column2.sub(column2.meanNumber());
-                double anx = (double) Transforms.pow(columnSub1, 2).sumNumber() * (double) Transforms.pow(columnSub2, 2).sumNumber();
-                row.put(0, i, ans / Math.sqrt(anx));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr1, arr2, dayNum, ArrayUtils::corr);
     }
 
     public static INDArray abs(INDArray arr) {
@@ -234,7 +95,7 @@ public class ExpFunctions {
     }
 
     public static INDArray log(INDArray arr) {
-        return Transforms.log(Transforms.abs(arr.addi(1.0)));
+        return Transforms.log(Transforms.abs(arr.add(1.0)));
     }
 
     public static INDArray sqrt(INDArray arr) {
@@ -246,258 +107,95 @@ public class ExpFunctions {
     }
 
     public static INDArray sign(INDArray arr) {
-        BooleanIndexing.replaceWhere(arr, 0.0, Conditions.isNan());
-        return Transforms.sign(arr);
+        return Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
     }
 
     public static INDArray exp(INDArray arr) {
-        BooleanIndexing.replaceWhere(arr, 0.0, Conditions.isNan());
-        INDArray arrNorm = arr.sub(arr.mean(0)).div(arr.std(0).add(1.0));
+        INDArray array = ArrayUtils.replaceNan(arr, 0.0);
+        INDArray arrNorm = arr.sub(array.mean(0)).div(array.std(0).add(1.0));
         return Transforms.exp(arrNorm);
     }
 
     public static INDArray rank(INDArray arr) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current<arr.rows(); current++) {
-            INDArray row = arr.getRow(current);
-            result.putRow(current, ArrayUtils.rank(row, false, "first"));
-        }
-        return result;
+        return ArrayUtils.rank(arr, false, "first", false);
+    }
+
+    public static INDArray rankPct(INDArray arr) {
+        return ArrayUtils.rank(arr, false, "first", true);
     }
 
     public static INDArray delay(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current - dayNum < 0) {
-                continue;
-            }
-
-            result.putRow(current, arr.getRow(current - dayNum));
-        }
-        return result;
+        return ArrayUtils.shift(arr, dayNum);
     }
 
     public static INDArray delta(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current - dayNum < 0) {
-                continue;
-            }
-
-            result.putRow(current, arr.getRow(current).sub(arr.getRow(current - dayNum)));
-        }
-        return result;
+        return arr.sub(ArrayUtils.shift(arr, dayNum));
     }
 
     public static INDArray decayLinear(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            final double[] sum = {0.0};
+            List<Double> decayWeights = ArrayUtils.rangeClosed(1.0, (double) array.columns(), 1.0, num -> {
+                sum[0] += num;
+                return num;
+            });
+            double total = 0;
+            for (int i=0; i<array.columns(); i++) {
+                total += array.getDouble(i) * decayWeights.get(i) / sum[0];
             }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                int n = column.columns();
-                INDArray decayWeights = ArrayUtils.arange(1.0, (double) (n+1), 1.0);
-                decayWeights = decayWeights.div(decayWeights.sum(0));
-                row.putColumn(i, column.mul(decayWeights).sum(0));
-            }
-            result.putRow(current, row);
-        }
-        return result;
-    }
-
-    public static INDArray prod(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).prod(0));
-        }
-        return result;
+            return total;
+        });
     }
 
     public static INDArray min(INDArray arr1, INDArray arr2) {
-        INDArray arr_delta = arr1.sub(arr2);
-        BooleanIndexing.replaceWhere(arr_delta, 0.0, Conditions.lessThan(0.0));
-        return arr1.sub(arr_delta);
+        INDArray arrDelta = arr1.sub(arr2);
+        return arr1.sub(ArrayUtils.replaceLess(arrDelta, 0.0,0.0));
     }
 
     public static INDArray max(INDArray arr1, INDArray arr2) {
-        INDArray arr_delta = arr1.sub(arr2);
-        BooleanIndexing.replaceWhere(arr_delta, 0.0, Conditions.greaterThan(0.0));
-        return arr1.sub(arr_delta);
+        INDArray arrDelta = arr1.sub(arr2);
+        return arr1.sub(ArrayUtils.replaceGreater(arrDelta, 0.0, 0.0));
     }
 
     public static INDArray count(INDArray arr, Integer dayNum) {
-        BooleanIndexing.replaceWhere(arr, 0.0, Conditions.isNan());
-        INDArray arrCon = Transforms.sign(arr);
-        BooleanIndexing.replaceWhere(arrCon, 0.0, Conditions.equals(-1));
-
-        long[] shape = {arrCon.rows(), arrCon.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arrCon.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arrCon.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).sum(0));
-        }
-        return result;
+        INDArray arrCon = Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
+        return tsSum(ArrayUtils.replaceEquals(arrCon, -1.0, 0.0), dayNum);
     }
 
     public static INDArray sumIf(INDArray arr, Integer dayNum) {
-        INDArray arrCopy = arr.dup();
-        BooleanIndexing.replaceWhere(arrCopy, 0.0, Conditions.isNan());
-        INDArray arrCon = Transforms.sign(arrCopy);
+        INDArray arrCon = Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
         INDArray arrSelect = arr.mul(arrCon);
-
-        long[] shape = {arrSelect.rows(), arrSelect.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arrSelect.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arrSelect.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).sum(0));
-        }
-        return result;
+        return tsSum(arrSelect, dayNum);
     }
 
     public static INDArray sma(INDArray arr, Integer dayNum1, Integer dayNum2) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        Integer dayNum = dayNum1 / dayNum2;
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            result.putRow(current, arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all()).mean(0));
-        }
-        return result;
+        return mean(arr, dayNum1 / dayNum2);
     }
 
     public static INDArray highDay(INDArray arr, Integer dayNum) {
-            long[] shape = {arr.rows(), arr.columns()};
-            INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-            for (int current=0; current < arr.rows(); current++) {
-                if (current + 1 < dayNum) {
-                    continue;
-                }
-
-                int upper = current + 1;
-                int lower = upper - dayNum;
-                INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-                long[] rowShape = {1, temp.columns()};
-                INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-                for (int i=0; i<temp.columns(); i++) {
-                    INDArray column = temp.getColumn(i);
-                    int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                    if (countNan != 0) {
-                        continue;
-                    }
-                    INDArray ranks = ArrayUtils.rank(column);
-                    row.put(0, i, (double) (ranks.columns() - 1) - ranks.argMax(0).getDouble(0));
-                }
-                result.putRow(current, row);
-            }
-            return result;
-        }
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> array.columns() - 1 - ArrayUtils.argMax(array));
+    }
 
     public static INDArray lowDay(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                INDArray ranks = ArrayUtils.rank(column);
-                row.put(0, i, (double) (ranks.columns() - 1) - Nd4j.argMin(ranks, 0).getDouble(0));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> array.columns() - 1 - ArrayUtils.argMin(array));
     }
 
     public static INDArray ret(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current - dayNum < 0) {
-                continue;
-            }
-
-            // TODO fill_method=None/Pad?
-            result.putRow(current, arr.getRow(current).div(arr.getRow(current-dayNum)).sub(1.0));
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (array1, array2) -> array1.div(array2).sub(1.0));
     }
 
     public static INDArray wma(INDArray arr, Integer dayNum) {
-        long[] shape = {arr.rows(), arr.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < arr.rows(); current++) {
-            if (current + 1 < dayNum) {
-                continue;
-            }
-
-            int upper = current + 1;
-            int lower = upper - dayNum;
-            INDArray temp = arr.get(NDArrayIndex.interval(lower, upper), NDArrayIndex.all());
-            long[] rowShape = {1, temp.columns()};
-            INDArray row = Nd4j.valueArrayOf(rowShape, Double.NaN, DataType.DOUBLE);
-            for (int i=0; i<temp.columns(); i++) {
-                INDArray column = temp.getColumn(i);
-                int countNan = Nd4j.getExecutioner().exec(new MatchCondition(column, Conditions.isNan())).getInt(0);
-                if (countNan != 0) {
-                    continue;
-                }
-                long[] baseShape = {column.rows(), column.columns()};
-                INDArray base = Nd4j.valueArrayOf(baseShape, 0.9, DataType.DOUBLE);
-                INDArray pow = Transforms.reverse(ArrayUtils.arange(1.0, (double) (column.columns()+1), 1.0), false);
-                row.putColumn(i, Transforms.dot(column, Transforms.pow(base, pow)));
-            }
-            result.putRow(current, row);
-        }
-        return result;
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            final int[] index = {array.columns() - 1};
+            final double[] sum = {0.0};
+            ArrayUtils.rangeClosed(1.0, (double) array.columns(), 1.0, num -> {
+                double mul = Math.pow(0.9, num) * array.getDouble(index[0]);
+                index[0]--;
+                sum[0] += mul;
+                return mul;
+            });
+            return sum[0];
+        });
     }
 
     public static INDArray regBeta(INDArray arr1, INDArray arr2, Integer dayNum) {
@@ -515,48 +213,59 @@ public class ExpFunctions {
 //    public static void main(String[] args) {
 //        INDArray arr = Nd4j.create(new double[][]{{Double.NaN,-2.0,3.0},{4.0,Double.NaN,-6.0},{4.0,-8.0,Double.NaN},{12.0,12.0,25.0}});
 //        INDArray arr1 = Nd4j.create(new double[][]{{4.0,-2.0,33.0},{24.0,2.0,-6.0},{-7.0,18.0,25.0},{12.0,58.0,32.0}});
-//        System.out.println(arr);
+//        INDArray arr = FileUtils.readCsv("D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
+//        INDArray arr1 = FileUtils.readCsv("D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
+//
 //        System.out.println();
-//        System.out.println(arr1);
+//        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//        System.out.println("arr: " + arr);
+//        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//        System.out.println("arr1: " + arr1);
+//        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 //        System.out.println();
-//        System.out.println(sum(arr, arr1));
-//        System.out.println(sub(arr, arr1));
-//        System.out.println(mul(arr, arr1));
-//        System.out.println(div(arr, arr1));
-//        System.out.println(tsSum(arr, 2));
-//        System.out.println(std(arr, 2));
-//        System.out.println(mean(arr, 2));
-//        System.out.println(tsMin(arr, 2));
-//        System.out.println(llv(arr, 2));
-//        System.out.println(tsMax(arr, 2));
-//        System.out.println(hhv(arr, 2));
-//        System.out.println(tsRank(arr, 2));
-//        System.out.println(cov(arr, arr1, 2));
-//        System.out.println(corr(arr, arr1, 2));
-//        System.out.println(abs(arr));
-//        System.out.println(relu(arr));
-//        System.out.println(sigmoid(arr));
-//        System.out.println(log(arr));
-//        System.out.println(sqrt(arr));
-//        System.out.println(square(arr));
-//        System.out.println(sign(arr));
-//        System.out.println(exp(arr));
-//        System.out.println(rank(arr));
-//        System.out.println(delay(arr, 2));
-//        System.out.println(delta(arr, 2));
-//        System.out.println(decayLinear(arr, 2));
-//        System.out.println(prod(arr, 2));
-//        System.out.println(min(arr, arr1));
-//        System.out.println(max(arr, arr1));
-//        System.out.println(count(arr, 2));
-//        System.out.println(sumIf(arr, 2));
-//        System.out.println(sma(arr, 4, 3));
-//        System.out.println(highDay(arr, 2));
-//        System.out.println(lowDay(arr, 2));
-//        System.out.println(ret(arr, 2));
-//        System.out.println(wma(arr, 2));
-//        System.out.println(regBeta(arr, arr1, 2));
-//        System.out.println(regResi(arr, arr1, 2));
+//
+//        long startTime = System.currentTimeMillis();
+//        System.out.println("sum: " + sum(arr, arr1));
+//        System.out.println("sub: " + sub(arr, arr1));
+//        System.out.println("mul: " + mul(arr, arr1));
+//        System.out.println("div: " + div(arr, arr1));
+//        System.out.println("tsSum: " + tsSum(arr, 2));
+//        System.out.println("std: " + std(arr, 2));
+//        System.out.println("mean: " + mean(arr, 2));
+//        System.out.println("prod: " + prod(arr, 2));
+//        System.out.println("tsMin: " + tsMin(arr, 2));
+//        System.out.println("llv: " + llv(arr, 2));
+//        System.out.println("tsMax: " + tsMax(arr, 2));
+//        System.out.println("hhv: " + hhv(arr, 2));
+//        System.out.println("tsRank: " + tsRank(arr, 2));
+//        System.out.println("cov: " + cov(arr, arr1, 3));
+//        System.out.println("corr: " + corr(arr, arr1, 3));
+//        System.out.println("abs: " + abs(arr));
+//        System.out.println("relu: " + relu(arr));
+//        System.out.println("sigmoid: " + sigmoid(arr));
+//        System.out.println("log: " + log(arr));
+//        System.out.println("sqrt: " + sqrt(arr));
+//        System.out.println("square: " + square(arr));
+//        System.out.println("sign: " + sign(arr));
+//        System.out.println("exp: " + exp(arr));
+//        System.out.println("rank: " + rank(arr));
+//        System.out.println("rankPct: " + rankPct(arr));
+//        System.out.println("delay: " + delay(arr, 2));
+//        System.out.println("delta: " + delta(arr, 2));
+//        System.out.println("decayLinear: " + decayLinear(arr, 2));
+//        System.out.println("min: " + min(arr, arr1));
+//        System.out.println("max: " + max(arr, arr1));
+//        System.out.println("count: " + count(arr, 2));
+//        System.out.println("sumIf: " + sumIf(arr, 2));
+//        System.out.println("sma: " + sma(arr, 4, 3));
+//        System.out.println("highDay: " + highDay(arr, 2));
+//        System.out.println("lowDay: " + lowDay(arr, 2));
+//        System.out.println("ret: " + ret(arr, 2));
+//        System.out.println("wma: " + wma(arr, 3));
+//        System.out.println("regBeta: " + regBeta(arr, arr1, 2));
+//        System.out.println("regResi: " + regResi(arr, arr1, 2));
+//        System.out.println("==================================================================================> cost "
+//                + (System.currentTimeMillis() - startTime) / 1000 + "s");
 //    }
 
 }
