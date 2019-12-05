@@ -15,8 +15,8 @@ import java.util.List;
 public class DataBean {
 
     private ExpVariables type;
-    private List<String> header;
-    private List<Date> index;
+    private List<String> headers;
+    private List<Date> indexes;
     private INDArray data;
 
     public ExpVariables getType() {
@@ -27,20 +27,20 @@ public class DataBean {
         this.type = type;
     }
 
-    public List<String> getHeader() {
-        return header;
+    public List<String> getHeaders() {
+        return headers;
     }
 
-    public void setHeader(List<String> header) {
-        this.header = header;
+    public void setHeaders(List<String> headers) {
+        this.headers = headers;
     }
 
-    public List<Date> getIndex() {
-        return index;
+    public List<Date> getIndexes() {
+        return indexes;
     }
 
-    public void setIndex(List<Date> index) {
-        this.index = index;
+    public void setIndexes(List<Date> indexes) {
+        this.indexes = indexes;
     }
 
     public INDArray getData() {

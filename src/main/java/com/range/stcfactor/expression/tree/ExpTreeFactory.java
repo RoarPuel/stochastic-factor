@@ -1,10 +1,10 @@
 package com.range.stcfactor.expression.tree;
 
-import com.range.stcfactor.expression.RandomHelper;
+import com.range.stcfactor.common.utils.RandomUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +74,7 @@ public class ExpTreeFactory {
             depthMax = MAX_EXCLUSIVE;
         }
         logger.debug("Build tree {}<=depth<={}, root: {}.", depthMin, depthMax, root);
-        return build(RandomHelper.getRandomNum(depthMin, depthMax), root, rootType);
+        return build(RandomUtils.getRandomNum(depthMin, depthMax + 1), root, rootType);
     }
 
     /**
@@ -84,9 +84,9 @@ public class ExpTreeFactory {
         ExpTree expTree = new ExpTree(depth);
         if (root == null) {
             root = new ExpTreeNode<>();
-            root.setData(RandomHelper.getRandomInfos(functions.get(rootType)));
+            root.setData(getRandomInfo(functions.get(rootType)));
         }
-        addChild(root, depth-1);
+        addChild(root, depth - 1);
         expTree.setRoot(root);
         return expTree;
     }
@@ -97,25 +97,29 @@ public class ExpTreeFactory {
      * @param layer 树的层数
      */
     private void addChild(ExpTreeNode<ExpModel> parent, int layer) {
-        List<ExpTreeNode<ExpModel>> nodes = new LinkedList<>();
+        List<ExpTreeNode<ExpModel>> nodes = new ArrayList<>();
         if (parent.getData().getParametersType() != null) {
             if (layer <= 1) {
                 for (Class type : parent.getData().getParametersType()) {
                     ExpTreeNode<ExpModel> node = new ExpTreeNode<>();
-                    node.setData(RandomHelper.getRandomInfos(variables.get(type)));
-                    node.setChildNodes(new LinkedList<>());
+                    node.setData(getRandomInfo(variables.get(type)));
+                    node.setChildNodes(new ArrayList<>());
                     nodes.add(node);
                 }
             } else {
                 for (Class type : parent.getData().getParametersType()) {
                     ExpTreeNode<ExpModel> node = new ExpTreeNode<>();
-                    node.setData(RandomHelper.getRandomInfos(models.get(type)));
-                    addChild(node, layer-1);
+                    node.setData(getRandomInfo(models.get(type)));
+                    addChild(node, layer - 1);
                     nodes.add(node);
                 }
             }
         }
         parent.setChildNodes(nodes);
+    }
+
+    private ExpModel getRandomInfo(List<ExpModel> infos) {
+        return (ExpModel) RandomUtils.getRandomInfo(infos).clone();
     }
 
 }

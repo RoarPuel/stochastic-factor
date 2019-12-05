@@ -3,7 +3,6 @@ package com.range.stcfactor.expression;
 import com.range.stcfactor.common.utils.ArrayUtils;
 import com.range.stcfactor.common.helper.RollingArray;
 import com.range.stcfactor.common.helper.RollingDouble;
-import com.range.stcfactor.common.utils.FileUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
@@ -169,7 +168,7 @@ public class ExpFunctions {
     }
 
     public static INDArray sma(INDArray arr, Integer dayNum1, Integer dayNum2) {
-        return mean(arr, dayNum1 / dayNum2);
+        return mean(arr, dayNum1>=dayNum2 ? dayNum1/dayNum2 : dayNum2/dayNum1);
     }
 
     public static INDArray highDay(INDArray arr, Integer dayNum) {
@@ -211,10 +210,19 @@ public class ExpFunctions {
     }
 
 //    public static void main(String[] args) {
+//        INDArray open = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
+//        INDArray high = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\high.csv");
+//        INDArray low = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\low.csv");
+//        INDArray close = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
+//        INDArray vol = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\vol.csv");
+//        INDArray share = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\share.csv");
+//        INDArray turnover = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\turnover.csv");
+//        System.out.println(corr(abs(sigmoid(vol)),mul(div(low,turnover),exp(low)),119));
+//
 //        INDArray arr = Nd4j.create(new double[][]{{Double.NaN,-2.0,3.0},{4.0,Double.NaN,-6.0},{4.0,-8.0,Double.NaN},{12.0,12.0,25.0}});
 //        INDArray arr1 = Nd4j.create(new double[][]{{4.0,-2.0,33.0},{24.0,2.0,-6.0},{-7.0,18.0,25.0},{12.0,58.0,32.0}});
-//        INDArray arr = FileUtils.readCsv("D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
-//        INDArray arr1 = FileUtils.readCsv("D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
+//        INDArray arr = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\open.csv");
+//        INDArray arr1 = FileUtils.readData("D:\\Work\\Project\\Java\\stochastic-factor\\data\\close.csv");
 //
 //        System.out.println();
 //        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
@@ -261,7 +269,7 @@ public class ExpFunctions {
 //        System.out.println("highDay: " + highDay(arr, 2));
 //        System.out.println("lowDay: " + lowDay(arr, 2));
 //        System.out.println("ret: " + ret(arr, 2));
-//        System.out.println("wma: " + wma(arr, 3));
+//        System.out.println("wma: " + wma(arr, 2));
 //        System.out.println("regBeta: " + regBeta(arr, arr1, 2));
 //        System.out.println("regResi: " + regResi(arr, arr1, 2));
 //        System.out.println("==================================================================================> cost "

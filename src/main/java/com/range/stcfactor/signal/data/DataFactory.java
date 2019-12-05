@@ -1,5 +1,6 @@
 package com.range.stcfactor.signal.data;
 
+import com.range.stcfactor.common.utils.RandomUtils;
 import com.range.stcfactor.expression.ExpVariables;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,12 +21,14 @@ public class DataFactory {
         this.dataModel = dataModel;
     }
 
-    public Object obtainData(String variableName) {
-        return dataModel.getData(ExpVariables.valueOf(variableName));
-    }
-
     public Object obtainData(ExpVariables variable) {
-        return dataModel.getData(variable);
+        Object data;
+        if (ExpVariables.day_num == variable) {
+            data = RandomUtils.getRandomNum(2, 243);
+        } else {
+            data = dataModel.getData(variable);
+        }
+        return data;
     }
 
 }

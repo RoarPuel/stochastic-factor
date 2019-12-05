@@ -2,17 +2,14 @@ package com.range.stcfactor;
 
 import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.expression.ExpGenerator;
-import com.range.stcfactor.expression.ExpVariables;
-import com.range.stcfactor.expression.tree.ExpModel;
 import com.range.stcfactor.expression.tree.ExpTree;
-import com.range.stcfactor.expression.tree.ExpTreeNode;
 import com.range.stcfactor.signal.SignalGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.nd4j.linalg.api.ndarray.INDArray;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.Set;
 
@@ -27,62 +24,46 @@ public class AppLauncher {
     private static final Logger logger = LogManager.getLogger(AppLauncher.class);
 
     public static void main(String[] args) {
-        Properties config = initConfig();
+        String configPath = Constant.DEFAULT_CONFIG_PATH;
+        if (args.length > 0) {
+            configPath = args[0];
+        }
+        Properties config = initConfig(configPath);
+        logger.info("Load properties from: {}.", configPath);
+        logger.info("     {} = {}", Constant.THREAD_PARALLEL, config.getProperty(Constant.THREAD_PARALLEL));
+        logger.info("     {} = {}", Constant.EXP_TOTAL, config.getProperty(Constant.EXP_TOTAL));
+        logger.info("     {} = {}", Constant.EXP_DEPTH_MIN, config.getProperty(Constant.EXP_DEPTH_MIN));
+        logger.info("     {} = {}", Constant.EXP_DEPTH_MAX, config.getProperty(Constant.EXP_DEPTH_MAX));
+        logger.info("     {} = {}", Constant.DATA_FILE_PATH, config.getProperty(Constant.DATA_FILE_PATH));
+        logger.info("     {} = {}", Constant.FACTOR_FILE_PATH, config.getProperty(Constant.FACTOR_FILE_PATH));
+        logger.info("     {} = {}", Constant.FILTER_GROUP_SETTING, config.getProperty(Constant.FILTER_GROUP_SETTING));
+        logger.info("     {} = {}", Constant.FILTER_TOP_SETTING, config.getProperty(Constant.FILTER_TOP_SETTING));
+        logger.info("     {} = {}", Constant.THRESHOLD_TOTAL_EFFECTIVE_RATE, config.getProperty(Constant.THRESHOLD_TOTAL_EFFECTIVE_RATE));
+        logger.info("     {} = {}", Constant.THRESHOLD_DAY_EFFECTIVE_RATE, config.getProperty(Constant.THRESHOLD_DAY_EFFECTIVE_RATE));
+        logger.info("     {} = {}", Constant.THRESHOLD_TOTAL_INFORMATION_COEFFICIENT, config.getProperty(Constant.THRESHOLD_TOTAL_INFORMATION_COEFFICIENT));
+        logger.info("     {} = {}", Constant.THRESHOLD_GROUP_INFORMATION_COEFFICIENT, config.getProperty(Constant.THRESHOLD_GROUP_INFORMATION_COEFFICIENT));
+        logger.info("     {} = {}", Constant.THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT, config.getProperty(Constant.THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT));
+        logger.info("     {} = {}", Constant.THRESHOLD_DAY_TURNOVER_RATE, config.getProperty(Constant.THRESHOLD_DAY_TURNOVER_RATE));
 
         logger.info("=== Start generate expressions.");
         ExpGenerator expGenerator = new ExpGenerator(config);
         Set<ExpTree> exps = expGenerator.generateRandomExpression();
         logger.info("=== Finish generate expressions. Actual count:{}.", exps.size());
 
-        logger.info("=== Start generate signal.");
+        logger.info("=== Start signal task.");
         SignalGenerator signalGenerator = new SignalGenerator(config);
-//        signalGenerator.startTasks(exps);
-        signalGenerator.startTask(customExp());
+        signalGenerator.startTasks(exps);
         logger.info("=== Finish signal task.");
     }
 
-    private static ExpTree customExp() {
-        ExpTree exp = new ExpTree(2);
-
-        ExpModel child1Data = new ExpModel();
-        child1Data.setModelName(ExpVariables.share.name());
-        child1Data.setReturnType(INDArray.class);
-        ExpTreeNode<ExpModel> child1 = new ExpTreeNode<>();
-        child1.setData(child1Data);
-
-        ExpModel child2Data = new ExpModel();
-        child2Data.setModelName(ExpVariables.day_num.name());
-        child2Data.setReturnType(Integer.class);
-        ExpTreeNode<ExpModel> child2 = new ExpTreeNode<>();
-        child2.setData(child2Data);
-
-        ExpModel rootData = new ExpModel();
-        rootData.setModelName("tsRank");
-        rootData.setParametersType(new Class[]{INDArray.class, Integer.class});
-        rootData.setReturnType(INDArray.class);
-
-        ExpTreeNode<ExpModel> root = new ExpTreeNode<>();
-        root.setData(rootData);
-        exp.setRoot(root);
-        List<ExpTreeNode<ExpModel>> children = new ArrayList<>();
-        children.add(child1);
-        children.add(child2);
-        root.setChildNodes(children);
-
-        return exp;
-    }
-
-    private static Properties initConfig() {
+    private static Properties initConfig(String configPath) {
         Properties config = new Properties();
-        config.put(Constant.EXP_TOTAL, "1");
-        config.put(Constant.EXP_DEPTH_MIN, "3");
-        config.put(Constant.EXP_DEPTH_MAX, "5");
-
-        config.put(Constant.DATA_DATE_NUM, "2");
-        config.put(Constant.DATA_FILE_PATH, "D:\\Work\\Project\\Java\\stochastic-factor\\data\\{0}.csv");
-
-        config.put(Constant.THRESHOLD_INFORMATION_COEFFICIENT, "0.02");
-        config.put(Constant.THRESHOLD_AUTO_CORRELATION, "0.8");
+        try {
+            InputStream inputStream = new FileInputStream(new File(configPath));
+            config.load(inputStream);
+        } catch (Exception e) {
+            logger.error("load properties error: {}", e.getMessage());
+        }
         return config;
     }
 

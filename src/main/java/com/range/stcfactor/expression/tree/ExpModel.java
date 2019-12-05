@@ -1,12 +1,17 @@
 package com.range.stcfactor.expression.tree;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * 函数信息
  *
  * @author renjie.zhu@woqutech.com
  * @create 2019-08-05
  */
-public class ExpModel {
+public class ExpModel implements Cloneable {
+
+    private static final Logger logger = LogManager.getLogger(ExpModel.class);
 
     private String modelName;
     private Class[] parametersType;
@@ -71,4 +76,16 @@ public class ExpModel {
     public String toString() {
         return this.modelName;
     }
+
+    @Override
+    public Object clone() {
+        ExpModel model = null;
+        try {
+            model = (ExpModel) super.clone();
+        } catch (CloneNotSupportedException e) {
+            logger.error("ExpModel clone error.", e);
+        }
+        return model;
+    }
+
 }

@@ -6,7 +6,6 @@ import com.range.stcfactor.common.helper.Rolling2Array;
 import com.range.stcfactor.common.helper.Rolling2Double;
 import com.range.stcfactor.common.helper.RollingArray;
 import com.range.stcfactor.common.helper.RollingDouble;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nd4j.linalg.api.buffer.DataType;
@@ -115,20 +114,27 @@ public class ArrayUtils {
         return result;
     }
 
-    public static boolean hasNan(INDArray array) {
+    private static boolean hasNan(INDArray array) {
         boolean hasNan = false;
-        for (int i=0; i<array.columns(); i++) {
-            if (Double.isNaN(array.getDouble(i))) {
-                hasNan = true;
+        for (int i=0; i<array.rows(); i++) {
+            INDArray row = array.getRow(i);
+            for (int j=0; j<row.columns(); j++) {
+                if (Double.isNaN(array.getDouble(i))) {
+                    hasNan = true;
+                    break;
+                }
+            }
+
+            if (hasNan) {
                 break;
             }
         }
         return hasNan;
     }
 
-    public static int countEffctive(INDArray array) {
+    public static boolean isAllNan(INDArray array) {
         int countNan = Nd4j.getExecutioner().exec(new MatchCondition(array, Conditions.isNan())).getInt(0);
-        return array.rows() * array.columns() - countNan;
+        return countNan == array.rows() * array.columns();
     }
 
     public static INDArray replaceNan(INDArray array, Double set) {
@@ -267,25 +273,9 @@ public class ArrayUtils {
         return (double) index;
     }
 
-    public static Double covEffective(INDArray array1, INDArray array2) {
-        List<Double> effectiveRow1 = new ArrayList<>();
-        List<Double> effectiveRow2 = new ArrayList<>();
-        for (int i=0; i<array1.columns(); i++) {
-            double value = array1.getDouble(i);
-            if (Double.isNaN(value)) {
-                continue;
-            }
-            effectiveRow1.add(value);
-            effectiveRow2.add(array2.getDouble(i));
-        }
-        if (CollectionUtils.isEmpty(effectiveRow1)
-                || CollectionUtils.isEmpty(effectiveRow2)) {
-            return 0.0;
-        }
-        return cov(Nd4j.create(effectiveRow1), Nd4j.create(effectiveRow2));
-    }
-
     public static Double cov(INDArray array1, INDArray array2) {
+//        double ans = (double) array1.sub(array1.meanNumber()).mul(array2.sub(array2.meanNumber())).sumNumber();
+//        return ans / (array1.columns() - 1);
         double mean1 = mean(array1);
         double mean2 = mean(array2);
         double ans = 0.0;
@@ -295,25 +285,12 @@ public class ArrayUtils {
         return ans / (array1.columns() - 1);
     }
 
-    public static Double corrEffective(INDArray array1, INDArray array2) {
-        List<Double> effectiveRow1 = new ArrayList<>();
-        List<Double> effectiveRow2 = new ArrayList<>();
-        for (int i=0; i<array1.columns(); i++) {
-            double value = array1.getDouble(i);
-            if (Double.isNaN(value)) {
-                continue;
-            }
-            effectiveRow1.add(value);
-            effectiveRow2.add(array2.getDouble(i));
-        }
-        if (CollectionUtils.isEmpty(effectiveRow1)
-            || CollectionUtils.isEmpty(effectiveRow2)) {
-            return 0.0;
-        }
-        return corr(Nd4j.create(effectiveRow1), Nd4j.create(effectiveRow2));
-    }
-
     public static Double corr(INDArray array1, INDArray array2) {
+//        double ans = (double) array1.sub(array1.meanNumber()).mul(array2.sub(array2.meanNumber())).sumNumber();
+//        INDArray sub1 = array1.sub(array1.meanNumber());
+//        INDArray sub2 = array2.sub(array2.meanNumber());
+//        double anx = (double) Transforms.pow(sub1, 2).sumNumber() * (double) Transforms.pow(sub2, 2).sumNumber();
+//        return ans / Math.sqrt(anx);
         double mean1 = mean(array1);
         double mean2 = mean(array2);
         double ans = 0.0;

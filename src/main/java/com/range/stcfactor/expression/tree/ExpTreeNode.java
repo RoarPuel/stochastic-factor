@@ -1,5 +1,7 @@
 package com.range.stcfactor.expression.tree;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.List;
 
 /**
@@ -32,8 +34,11 @@ public class ExpTreeNode<T> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(data)
-                .append("(");
+        sb.append(data);
+        if (CollectionUtils.isEmpty(childNodes)) {
+            return sb.toString();
+        }
+        sb.append("(");
         childNodes.forEach(node -> sb.append(node.getData()));
         sb.append(")");
         return sb.toString();

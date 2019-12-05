@@ -12,8 +12,6 @@ public class ExpTree {
 
     private int depth;
     private ExpTreeNode<ExpModel> root;
-    private double icThreshold;
-    private double acThreshold;
 
     public ExpTree(int depth) {
         this.depth = depth;
@@ -33,22 +31,6 @@ public class ExpTree {
 
     public void setRoot(ExpTreeNode<ExpModel> root) {
         this.root = root;
-    }
-
-    public double getIcThreshold() {
-        return icThreshold;
-    }
-
-    public void setIcThreshold(double icThreshold) {
-        this.icThreshold = icThreshold;
-    }
-
-    public double getAcThreshold() {
-        return acThreshold;
-    }
-
-    public void setAcThreshold(double acThreshold) {
-        this.acThreshold = acThreshold;
     }
 
     @Override

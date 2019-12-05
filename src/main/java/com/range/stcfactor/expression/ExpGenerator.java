@@ -8,7 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * 表达式生成器
@@ -27,9 +34,9 @@ public class ExpGenerator {
     private ExpTreeFactory factory;
 
     public ExpGenerator(Properties config) {
-        this.total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, "10"));
-        this.depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, "2"));
-        this.depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, "3"));
+        this.total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, Constant.DEFAULT_EXP_TOTAL));
+        this.depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, Constant.DEFAULT_EXP_DEPTH_MIN));
+        this.depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, Constant.DEFAULT_EXP_DEPTH_MAX));
         this.factory = new ExpTreeFactory(initModels(),
                                     initFunctions(),
                                     initVariables(),
@@ -45,6 +52,9 @@ public class ExpGenerator {
 
         Method[] methods = ExpFunctions.class.getDeclaredMethods();
         for (Method method : methods) {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                continue;
+            }
             Class returnType = method.getReturnType();
             ExpModel expModel = new ExpModel(method.getName(), method.getParameterTypes(), returnType);
             putMap(models, returnType, expModel);
@@ -68,6 +78,9 @@ public class ExpGenerator {
 
         Method[] methods = ExpFunctions.class.getDeclaredMethods();
         for (Method method : methods) {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                continue;
+            }
             Class returnType = method.getReturnType();
             ExpModel expModel = new ExpModel(method.getName(), method.getParameterTypes(), returnType);
             putMap(functions, returnType, expModel);

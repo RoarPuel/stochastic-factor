@@ -7,12 +7,11 @@ import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeNode;
 import com.range.stcfactor.expression.tree.ExpModel;
 import com.range.stcfactor.signal.data.DataFactory;
+import com.range.stcfactor.signal.data.DataScreen;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -25,31 +24,38 @@ import java.util.concurrent.Callable;
  * @author zrj5865@163.com
  * @create 2019-08-08
  */
-public class SignalTask implements Callable<ExpTree> {
+public class SignalTask implements Callable<DataScreen> {
 
     private static final Logger logger = LogManager.getLogger(SignalTask.class);
 
-    private ExpTree expTree;
-    private DataFactory dataFactory;
+    private ExpTree expression;
+    private DataFactory factory;
+    private SignalFilter filter;
+
     private INDArray income;
 
-    public SignalTask(ExpTree expTree, DataFactory dataFactory) {
-        this.expTree = expTree;
-        this.dataFactory = dataFactory;
+    public SignalTask(ExpTree expression, DataFactory factory, SignalFilter filter) {
+        this.expression = expression;
+        this.factory = factory;
+        this.filter = filter;
 
-        INDArray close = (INDArray) dataFactory.obtainData(ExpVariables.close);
+        INDArray close = (INDArray) factory.obtainData(ExpVariables.close);
         this.income = ArrayUtils.shift(close, -1).div(close).sub(1.0);
     }
 
     @Override
-    public ExpTree call() {
-        logger.info("===== Thread [{}] expression: [{}].", Thread.currentThread().getId(), expTree);
-        long startTime = System.currentTimeMillis();
-        INDArray result = (INDArray) calculate(expTree.getRoot());
-        logger.info("===== Calculate [{}] cost {}s.", expTree, (System.currentTimeMillis() - startTime) / 1000);
+    public DataScreen call() {
+        logger.info("-------- Start expression : [{}].", expression);
 
-        expTree.setIcThreshold(filter(result));
-        return expTree;
+        long startTime = System.currentTimeMillis();
+        INDArray factor = (INDArray) calculate(expression.getRoot());
+        logger.info("======== Finish calculate [{}] factors cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
+
+        startTime = System.currentTimeMillis();
+        DataScreen screen = filter.screen(expression, factor, income);
+        logger.info("======== Finish filter [{}] indexes cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
+
+        return screen;
     }
 
     private Object calculate(ExpTreeNode<ExpModel> node) {
@@ -75,19 +81,20 @@ public class SignalTask implements Callable<ExpTree> {
             }
             return result;
         } else {
-            return dataFactory.obtainData(node.getData().getModelName());
+            Object data;
+            String variableName = node.getData().getModelName();
+            try {
+                ExpVariables variable = ExpVariables.valueOf(variableName);
+                data = factory.obtainData(variable);
+                if (ExpVariables.day_num == variable) {
+                    node.getData().setModelName(String.valueOf(data));
+                }
+            } catch (Exception e) {
+                logger.debug("Error variable: {}.", variableName, e);
+                data = Integer.valueOf(variableName);
+            }
+            return data;
         }
-    }
-
-    private Double filter(INDArray array) {
-        long[] shape = {1, array.rows()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < array.rows(); current++) {
-            INDArray row1 = array.getRow(current);
-            INDArray row2 = income.getRow(current);
-            result.put(0, current, ArrayUtils.corrEffective(row1, row2));
-        }
-        return (Double) ArrayUtils.replaceNan(result, 0.0).meanNumber();
     }
 
 }
