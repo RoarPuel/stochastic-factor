@@ -29,7 +29,7 @@ public class Constant {
     public static final String DEFAULT_FACTOR_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\factor\\{0}.csv";
 
     public static final String FILTER_GROUP_SETTING = "filter.group.setting";
-    public static final String DEFAULT_FILTER_GROUP_SETTING = "5";
+    public static final String DEFAULT_FILTER_GROUP_SETTING = "20";
     public static final String FILTER_TOP_SETTING = "filter.top.setting";
     public static final String DEFAULT_FILTER_TOP_SETTING = "100";
 

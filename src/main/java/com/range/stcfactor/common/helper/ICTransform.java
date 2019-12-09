@@ -1,6 +1,6 @@
 package com.range.stcfactor.common.helper;
 
-import java.util.List;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 /**
  * @author zrj5865@163.com
@@ -8,6 +8,6 @@ import java.util.List;
  */
 public interface ICTransform {
 
-    double apply(List<Double> list1, List<Double> list2);
+    double apply(INDArray array1, INDArray array2);
 
 }

@@ -112,8 +112,7 @@ public class SignalFilter {
 
     private boolean calTotalIC(DataScreen screen, INDArray income) {
         INDArray factor = screen.getFactor();
-        screen.setTotalIC(calculateIC(factor, income, (effectiveRowC, effectiveRowF) ->
-                ArrayUtils.corr(Nd4j.create(effectiveRowC), Nd4j.create(effectiveRowF))));
+        screen.setTotalIC(calculateIC(factor, income, ArrayUtils::corr));
 
         if (Double.isNaN(screen.getTotalIC()) || screen.getTotalIC() < this.totalIcThreshold) {
             screen.setUseful(false);
@@ -128,7 +127,7 @@ public class SignalFilter {
         INDArray factor = screen.getFactor();
         screen.setGroupIC(calculateIC(factor, income, (effectiveRowC, effectiveRowF) -> {
             // 排序, 分组
-            Integer[] sorts = ArrayUtils.argSort(Nd4j.create(effectiveRowC), false);
+            Integer[] sorts = ArrayUtils.argSort(effectiveRowC, false);
             int[] groupPers = new int[groupSetting];
             for (int j=0; j<groupPers.length; j++) {
                 if (j < sorts.length % groupSetting) {
@@ -146,8 +145,8 @@ public class SignalFilter {
                 List<Double> groupRowF = new ArrayList<>();
                 List<Double> groupRowC = new ArrayList<>();
                 for (int k=lower; k<upper; k++) {
-                    groupRowF.add(effectiveRowF.get(sorts[k]));
-                    groupRowC.add(effectiveRowC.get(sorts[k]));
+                    groupRowF.add(effectiveRowF.getDouble(sorts[k]));
+                    groupRowC.add(effectiveRowC.getDouble(sorts[k]));
                 }
                 double ic = ArrayUtils.corr(Nd4j.create(groupRowF), Nd4j.create(groupRowC));
                 if (!Double.isNaN(ic)) {
@@ -208,8 +207,7 @@ public class SignalFilter {
 
     public boolean calMutualIC(DataScreen screen, List<DataScreen> histories) {
         for (DataScreen comparer : histories) {
-            screen.setMutualIC(calculateIC(screen.getFactor(), comparer.getFactor(), (effectiveRowC, effectiveRowF) ->
-                    ArrayUtils.corr(Nd4j.create(effectiveRowC), Nd4j.create(effectiveRowF))));
+            screen.setMutualIC(calculateIC(screen.getFactor(), comparer.getFactor(), ArrayUtils::corr));
 
             if (!Double.isNaN(screen.getMutualIC()) && screen.getMutualIC() > this.mutualIcThreshold) {
                 screen.setUseful(false);
@@ -262,25 +260,30 @@ public class SignalFilter {
 
     private double calculateIC(INDArray factor, INDArray comparer, ICTransform transform) {
         List<Double> ics = new ArrayList<>();
-        int factorRowNum = factor.rows();
-        int comparerRowNum = comparer.rows();
-        int rowGap = Math.abs(factorRowNum - comparerRowNum);
-        int rowSize = Math.min(factorRowNum, comparerRowNum);
-        for (int current=0; current < rowSize; current++) {
-            INDArray rowF;
-            INDArray rowC;
-            if (factorRowNum >= comparerRowNum) {
-                rowF = factor.getRow(current + rowGap);
-                rowC = comparer.getRow(current);
+        int columns = factor.columns();
+        int factorRows = factor.rows();
+        int comparerRows = comparer.rows();
+        int rowGap = Math.abs(factorRows - comparerRows);
+        int rowSize = Math.min(factorRows, comparerRows);
+
+        double[][] factorArray = factor.toDoubleMatrix();
+        double[][] comparerArray = comparer.toDoubleMatrix();
+        for (int row=0; row < rowSize; row++) {
+            int factorRow;
+            int comparerRow;
+            if (factorRows >= comparerRows) {
+                factorRow = row + rowGap;
+                comparerRow = row;
             } else {
-                rowF = factor.getRow(current);
-                rowC = comparer.getRow(current + rowGap);
+                factorRow = row;
+                comparerRow = row + rowGap;
             }
+
             List<Double> effectiveRowF = new ArrayList<>();
             List<Double> effectiveRowC = new ArrayList<>();
-            for (int i=0; i<rowC.columns(); i++) {
-                double valueF = rowF.getDouble(i);
-                double valueC = rowC.getDouble(i);
+            for (int column=0; column<columns; column++) {
+                double valueF = factorArray[factorRow][column];
+                double valueC = comparerArray[comparerRow][column];
                 // 过滤有效值
                 if (isInvalid(valueC) || Double.isNaN(valueF)) {
                     continue;
@@ -288,10 +291,10 @@ public class SignalFilter {
                 effectiveRowF.add(valueF);
                 effectiveRowC.add(valueC);
             }
-            if (CollectionUtils.isEmpty(effectiveRowC) || CollectionUtils.isEmpty(effectiveRowF)) {
+            if (CollectionUtils.isNotEmpty(effectiveRowF) || CollectionUtils.isNotEmpty(effectiveRowC)) {
                 continue;
             }
-            double corr = transform.apply(effectiveRowC, effectiveRowF);
+            double corr = transform.apply(Nd4j.create(effectiveRowF), Nd4j.create(effectiveRowC));
             if (!Double.isNaN(corr)) {
                 ics.add(corr);
             }

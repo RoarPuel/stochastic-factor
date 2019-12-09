@@ -28,7 +28,7 @@ public class ExpressionTest {
         long startTime = System.currentTimeMillis();
         System.out.println(mul(div(regBeta(relu(share),share,98),wma(close,65)),regResi(square(corr(open,high,102)),corr(close,rankPct(turnover),206),128)));
         System.out.println("==================================================================================> cost "
-                + (System.currentTimeMillis() - startTime) / 1000 + "s");
+                + (System.currentTimeMillis() - startTime) + "ms");
     }
 
 }

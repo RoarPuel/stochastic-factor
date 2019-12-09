@@ -1,7 +1,7 @@
 package com.range.stcfactor.common.helper;
 
 /**
- * @author renjie.zhu@woqutech.com
+ * @author zrj5865@163.com
  * @create 2019-09-29
  */
 public class RankAssist {

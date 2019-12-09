@@ -49,7 +49,15 @@ public class ExpFunctions {
     }
 
     public static INDArray tsMin(INDArray arr, Integer dayNum) {
-        return ArrayUtils.rolling(arr, dayNum, ArrayUtils::min);
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            double min = Double.NaN;
+            for (double current : array) {
+                if (Double.isNaN(min) || current < min) {
+                    min = current;
+                }
+            }
+            return min;
+        });
     }
 
     public static INDArray llv(INDArray arr, Integer dayNum) {
@@ -57,7 +65,15 @@ public class ExpFunctions {
     }
 
     public static INDArray tsMax(INDArray arr, Integer dayNum) {
-        return ArrayUtils.rolling(arr, dayNum, ArrayUtils::max);
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            double max = Double.NaN;
+            for (double current : array) {
+                if (Double.isNaN(max) || current > max) {
+                    max = current;
+                }
+            }
+            return max;
+        });
     }
 
     public static INDArray hhv(INDArray arr, Integer dayNum) {
@@ -66,7 +82,7 @@ public class ExpFunctions {
 
     public static INDArray tsRank(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
-            double n = (double) array.columns();
+            double n = (double) array.length;
             Integer[] sort = ArrayUtils.argSort(array);
             List<Double> range = ArrayUtils.range(0, n, 1.0, num -> (num + 1.0) / n);
             return range.get(sort[sort.length-1]);
@@ -134,13 +150,13 @@ public class ExpFunctions {
     public static INDArray decayLinear(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             final double[] sum = {0.0};
-            List<Double> decayWeights = ArrayUtils.rangeClosed(1.0, (double) array.columns(), 1.0, num -> {
+            List<Double> decayWeights = ArrayUtils.rangeClosed(1.0, (double) array.length, 1.0, num -> {
                 sum[0] += num;
                 return num;
             });
             double total = 0;
-            for (int i=0; i<array.columns(); i++) {
-                total += array.getDouble(i) * decayWeights.get(i) / sum[0];
+            for (int i=0; i<array.length; i++) {
+                total += array[i] * decayWeights.get(i) / sum[0];
             }
             return total;
         });
@@ -172,11 +188,33 @@ public class ExpFunctions {
     }
 
     public static INDArray highDay(INDArray arr, Integer dayNum) {
-        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> array.columns() - 1 - ArrayUtils.argMax(array));
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            double max = Double.NaN;
+            int index = 0;
+            for (int i=0; i<array.length; i++) {
+                double current = array[i];
+                if (Double.isNaN(max) || current > max) {
+                    max = current;
+                    index = i;
+                }
+            }
+            return (double) array.length - 1 - index;
+        });
     }
 
     public static INDArray lowDay(INDArray arr, Integer dayNum) {
-        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> array.columns() - 1 - ArrayUtils.argMin(array));
+        return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
+            double min = Double.NaN;
+            int index = 0;
+            for (int i=0; i<array.length; i++) {
+                double current = array[i];
+                if (Double.isNaN(min) || current < min) {
+                    min = current;
+                    index = i;
+                }
+            }
+            return (double) array.length - 1 - index;
+        });
     }
 
     public static INDArray ret(INDArray arr, Integer dayNum) {
@@ -185,10 +223,10 @@ public class ExpFunctions {
 
     public static INDArray wma(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
-            final int[] index = {array.columns() - 1};
+            final int[] index = {array.length - 1};
             final double[] sum = {0.0};
-            ArrayUtils.rangeClosed(1.0, (double) array.columns(), 1.0, num -> {
-                double mul = Math.pow(0.9, num) * array.getDouble(index[0]);
+            ArrayUtils.rangeClosed(1.0, (double) array.length, 1.0, num -> {
+                double mul = Math.pow(0.9, num) * array[index[0]];
                 index[0]--;
                 sum[0] += mul;
                 return mul;
