@@ -31,6 +31,7 @@ public class AppLauncher {
         Properties config = initConfig(configPath);
         logger.info("Load properties from: {}.", configPath);
         logger.info("     {} = {}", Constant.THREAD_PARALLEL, config.getProperty(Constant.THREAD_PARALLEL));
+        logger.info("     {} = {}", Constant.TASK_QUEUE_MAX, config.getProperty(Constant.TASK_QUEUE_MAX));
         logger.info("     {} = {}", Constant.EXP_TOTAL, config.getProperty(Constant.EXP_TOTAL));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MIN, config.getProperty(Constant.EXP_DEPTH_MIN));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MAX, config.getProperty(Constant.EXP_DEPTH_MAX));

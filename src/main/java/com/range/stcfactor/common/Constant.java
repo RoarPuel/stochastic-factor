@@ -14,7 +14,9 @@ public class Constant {
     public static final Class DEFAULT_TYPE = INDArray.class;
 
     public static final String THREAD_PARALLEL = "thread.parallel";
-    public static final String DEFAULT_THREAD_PARALLEL = "20";
+    public static final String DEFAULT_THREAD_PARALLEL = String.valueOf(Runtime.getRuntime().availableProcessors());
+    public static final String TASK_QUEUE_MAX = "task.queue.max";
+    public static final String DEFAULT_TASK_QUEUE_MAX = "100";
 
     public static final String EXP_TOTAL = "exp.total";
     public static final String DEFAULT_EXP_TOTAL = "1";
