@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * 函数信息
  *
- * @author renjie.zhu@woqutech.com
+ * @author zrj5865@163.com
  * @create 2019-08-05
  */
 public class ExpModel implements Cloneable {

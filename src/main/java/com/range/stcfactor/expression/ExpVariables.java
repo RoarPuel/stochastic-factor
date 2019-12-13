@@ -13,83 +13,49 @@ public enum ExpVariables {
     /**
      * open
      */
-    open {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    open,
 
     /**
      * high
      */
-    high {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    high,
 
     /**
      * low
      */
-    low {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    low,
 
     /**
      * close
      */
-    close {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    close,
 
     /**
-     * vol
+     * volume
      */
-    vol {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    vol,
 
     /**
      * share
      */
-    share {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    share,
 
     /**
      * turnover
      */
-    turnover {
-        @Override
-        public Class getParameterType() {
-            return Constant.DEFAULT_TYPE;
-        }
-    },
+    turnover,
 
     /**
      * day_num
      */
-    day_num {
-        @Override
-        public Class getParameterType() {
-            return Integer.class;
-        }
-    };
+    day_num;
 
-    public abstract Class getParameterType();
+    public Class getType() {
+        if (this == day_num) {
+            return Integer.class;
+        } else {
+            return Constant.DEFAULT_TYPE;
+        }
+    }
 
 }

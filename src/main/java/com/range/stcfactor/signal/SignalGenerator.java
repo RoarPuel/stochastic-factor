@@ -2,6 +2,7 @@ package com.range.stcfactor.signal;
 
 import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.common.utils.FileUtils;
+import com.range.stcfactor.expression.ExpMode;
 import com.range.stcfactor.expression.ExpVariables;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.data.DataBean;
@@ -31,7 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * 信号生成
  *
- * @author renjie.zhu@woqutech.com
+ * @author zrj5865@163.com
  * @create 2019-08-06
  */
 public class SignalGenerator {
@@ -67,6 +68,7 @@ public class SignalGenerator {
     private List<Date> indexes;
 
     private int totalTask = 0;
+    private boolean isRecord = false;
 
     public SignalGenerator(Properties config) {
         this.taskQueueMax = Integer.valueOf(config.getProperty(Constant.TASK_QUEUE_MAX, Constant.DEFAULT_TASK_QUEUE_MAX));
@@ -81,13 +83,21 @@ public class SignalGenerator {
 
         this.factory = new DataFactory(initData());
         this.filter = new SignalFilter(readFactor(), config);
+
+        if (ExpMode.valueOf(config.getProperty(Constant.EXP_MODE, Constant.DEFAULT_EXP_MODE)) == ExpMode.auto) {
+            isRecord = true;
+        }
     }
 
     public void startTask(ExpTree exp) {
-        startTasks(Collections.singleton(exp));
+        startTasks(Collections.singleton(exp), false);
     }
 
     public void startTasks(Set<ExpTree> exps) {
+        startTasks(exps, isRecord);
+    }
+
+    private void startTasks(Set<ExpTree> exps, boolean isWrite) {
         totalTask = exps.size();
         monitor();
 
@@ -116,10 +126,14 @@ public class SignalGenerator {
         }
         close();
 
-        List<DataScreen> usefulScreens = new ArrayList<>();
-        List<DataScreen> uselessScreens = new ArrayList<>();
-        filterUseful(screens, usefulScreens, uselessScreens);
-        writeFactor(usefulScreens, uselessScreens);
+        if (isWrite) {
+            List<DataScreen> usefulScreens = new ArrayList<>();
+            List<DataScreen> uselessScreens = new ArrayList<>();
+            filterUseful(screens, usefulScreens, uselessScreens);
+            writeFactor(usefulScreens, uselessScreens);
+        } else {
+            screens.forEach(screen -> logger.info("Expression filter result: {}.", screen));
+        }
     }
 
     private void filterUseful(List<DataScreen> screens,

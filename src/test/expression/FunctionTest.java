@@ -6,7 +6,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import static com.range.stcfactor.expression.ExpFunctions.*;
 
 /**
- * @author renjie.zhu@woqutech.com
+ * @author zrj5865@163.com
  * @create 2019-12-09
  */
 public class FunctionTest {

@@ -18,6 +18,8 @@ public class Constant {
     public static final String TASK_QUEUE_MAX = "task.queue.max";
     public static final String DEFAULT_TASK_QUEUE_MAX = "100";
 
+    public static final String EXP_MODE = "exp.mode";
+    public static final String DEFAULT_EXP_MODE = "auto";
     public static final String EXP_TOTAL = "exp.total";
     public static final String DEFAULT_EXP_TOTAL = "1";
     public static final String EXP_DEPTH_MIN = "exp.depth.min";

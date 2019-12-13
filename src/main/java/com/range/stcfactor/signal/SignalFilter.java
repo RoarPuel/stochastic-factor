@@ -3,6 +3,7 @@ package com.range.stcfactor.signal;
 import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.common.helper.ICTransform;
 import com.range.stcfactor.common.utils.ArrayUtils;
+import com.range.stcfactor.expression.ExpMode;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.data.DataScreen;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,6 +40,8 @@ public class SignalFilter {
     private double mutualIcThreshold;
     private double dayTurnoverRateThreshold;
 
+    private boolean isInterrupt = false;
+
     public SignalFilter(List<DataScreen> factorHistory, Properties config) {
         this.factorHistory = factorHistory;
 
@@ -51,6 +54,10 @@ public class SignalFilter {
         this.groupIcThreshold = Double.valueOf(config.getProperty(Constant.THRESHOLD_GROUP_INFORMATION_COEFFICIENT, Constant.DEFAULT_THRESHOLD_GROUP_INFORMATION_COEFFICIENT));
         this.mutualIcThreshold = Double.valueOf(config.getProperty(Constant.THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT, Constant.DEFAULT_THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT));
         this.dayTurnoverRateThreshold = Double.valueOf(config.getProperty(Constant.THRESHOLD_DAY_TURNOVER_RATE, Constant.DEFAULT_THRESHOLD_DAY_TURNOVER_RATE));
+
+        if (ExpMode.valueOf(config.getProperty(Constant.EXP_MODE, Constant.DEFAULT_EXP_MODE)) == ExpMode.auto) {
+            isInterrupt = true;
+        }
     }
 
     public DataScreen screen(ExpTree exp, INDArray factor, INDArray income) {
@@ -79,7 +86,9 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Total effective rate is " + screen.getTotalEffectiveRate()
                     + " < " + this.totalEffectiveRateThreshold + " (threshold)");
-            return false;
+            if (isInterrupt) {
+                return false;
+            }
         }
         return true;
     }
@@ -105,7 +114,9 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Day effective rate is " + screen.getDayEffectiveRate()
                     + " < " + this.dayEffectiveRateThreshold + " (threshold)");
-            return false;
+            if (isInterrupt) {
+                return false;
+            }
         }
         return true;
     }
@@ -118,16 +129,18 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Total information coefficient is " + screen.getTotalIC()
                     + " < " + this.totalIcThreshold + " (threshold)");
-            return false;
+            if (isInterrupt) {
+                return false;
+            }
         }
         return true;
     }
 
     private boolean calGroupIC(DataScreen screen, INDArray income) {
         INDArray factor = screen.getFactor();
-        screen.setGroupIC(calculateIC(factor, income, (effectiveRowC, effectiveRowF) -> {
+        screen.setGroupIC(calculateIC(factor, income, (effectiveRowF, effectiveRowC) -> {
             // 排序, 分组
-            Integer[] sorts = ArrayUtils.argSort(effectiveRowC, false);
+            Integer[] sorts = ArrayUtils.argSort(effectiveRowF, false);
             int[] groupPers = new int[groupSetting];
             for (int j=0; j<groupPers.length; j++) {
                 if (j < sorts.length % groupSetting) {
@@ -165,7 +178,9 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Group information coefficient is " + screen.getGroupIC()
                     + " < " + this.groupIcThreshold + " (threshold)");
-            return false;
+            if (isInterrupt) {
+                return false;
+            }
         }
         return true;
     }
@@ -200,7 +215,9 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Day turnover rate is " + screen.getDayTurnoverRate()
                     + " > " + this.dayTurnoverRateThreshold + " (threshold)");
-            return false;
+            if (isInterrupt) {
+                return false;
+            }
         }
         return true;
     }
@@ -213,7 +230,9 @@ public class SignalFilter {
                 screen.setUseful(false);
                 screen.setUselessReason("Mutual information coefficient is " + screen.getMutualIC()
                         + " > " + this.mutualIcThreshold + " (threshold) with: [" + comparer.getExpression() + "]");
-                return false;
+                if (isInterrupt) {
+                    return false;
+                }
             }
         }
         return true;

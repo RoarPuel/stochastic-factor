@@ -99,7 +99,7 @@ public class ExpTreeFactory {
     private void addChild(ExpTreeNode<ExpModel> parent, int layer) {
         List<ExpTreeNode<ExpModel>> nodes = new ArrayList<>();
         if (parent.getData().getParametersType() != null) {
-            if (layer <= 1) {
+            if (layer <= 0) {
                 for (Class type : parent.getData().getParametersType()) {
                     ExpTreeNode<ExpModel> node = new ExpTreeNode<>();
                     node.setData(getRandomInfo(variables.get(type)));

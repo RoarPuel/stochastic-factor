@@ -17,6 +17,11 @@ public class ExpTree {
         this.depth = depth;
     }
 
+    public ExpTree(ExpTreeNode<ExpModel> root) {
+        this.depth = analysisDepth(root);
+        this.root = root;
+    }
+
     public int getDepth() {
         return depth;
     }
@@ -78,6 +83,21 @@ public class ExpTree {
             }
             sb.append(")");
         }
+    }
+
+    private int analysisDepth(ExpTreeNode<ExpModel> node) {
+        if (CollectionUtils.isEmpty(node.getChildNodes())) {
+            return 0;
+        }
+
+        int max = 0;
+        for (ExpTreeNode<ExpModel> child : node.getChildNodes()) {
+            int depth = analysisDepth(child);
+            if (depth > max) {
+                max = depth;
+            }
+        }
+        return max + 1;
     }
 
 }

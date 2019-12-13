@@ -1,0 +1,2 @@
+regResi(square(corr(open,high,102)),corr(close,rankPct(turnover),206),128)
+wma(close,68)

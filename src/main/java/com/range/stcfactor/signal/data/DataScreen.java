@@ -111,11 +111,11 @@ public class DataScreen {
     public String toString() {
         return "Expression:" + expression
                 + ", isUseful:" + useful
+                + ", totalEffectiveRate:" + totalEffectiveRate
+                + ", dayEffectiveRate:" + dayEffectiveRate
                 + ", totalIC:" + totalIC
                 + ", groupIC:" + groupIC
                 + ", mutualIC:" + mutualIC
-                + ", totalEffectiveRate:" + totalEffectiveRate
-                + ", dayEffectiveRate:" + dayEffectiveRate
                 + ", dayTurnoverRate:" + dayTurnoverRate;
     }
 

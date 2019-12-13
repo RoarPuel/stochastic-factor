@@ -1,6 +1,7 @@
 package com.range.stcfactor.expression;
 
 import com.range.stcfactor.common.Constant;
+import com.range.stcfactor.common.utils.FileUtils;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeFactory;
 import com.range.stcfactor.expression.tree.ExpModel;
@@ -9,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,16 +29,23 @@ public class ExpGenerator {
 
     private static final Logger logger = LogManager.getLogger(ExpGenerator.class);
 
+    private static final String EXISTED_EXP = "expression";
+
+    private ExpMode mode;
     private int total;
     private int depthMin;
     private int depthMax;
 
+    private String dataFilePath;
+
     private ExpTreeFactory factory;
 
     public ExpGenerator(Properties config) {
+        this.mode = ExpMode.valueOf(config.getProperty(Constant.EXP_MODE, Constant.DEFAULT_EXP_MODE));
         this.total = Integer.parseInt(config.getProperty(Constant.EXP_TOTAL, Constant.DEFAULT_EXP_TOTAL));
         this.depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, Constant.DEFAULT_EXP_DEPTH_MIN));
         this.depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, Constant.DEFAULT_EXP_DEPTH_MAX));
+        this.dataFilePath = config.getProperty(Constant.DATA_FILE_PATH, Constant.DEFAULT_DATA_FILE_PATH);
         this.factory = new ExpTreeFactory(initModels(),
                                     initFunctions(),
                                     initVariables(),
@@ -60,7 +69,7 @@ public class ExpGenerator {
             putMap(models, returnType, expModel);
         }
         for (ExpVariables var : ExpVariables.values()) {
-            Class returnType = var.getParameterType();
+            Class returnType = var.getType();
             ExpModel expModel = new ExpModel(var.name(), null, returnType);
             putMap(models, returnType, expModel);
         }
@@ -98,7 +107,7 @@ public class ExpGenerator {
         Map<Class, List<ExpModel>> variables = new HashMap<>();
 
         for (ExpVariables var : ExpVariables.values()) {
-            Class returnType = var.getParameterType();
+            Class returnType = var.getType();
             ExpModel expModel = new ExpModel(var.name(), null, returnType);
             putMap(variables, returnType, expModel);
         }
@@ -128,8 +137,29 @@ public class ExpGenerator {
         return weights;
     }
 
-    public Set<ExpTree> generateRandomExpression() {
-        return generateRandomExpression(total, depthMin, depthMax);
+    public Set<ExpTree> obtainExpression() {
+        Set<ExpTree> trees = new HashSet<>();
+        switch (mode) {
+            case auto:
+                trees = generateRandomExpression(total, depthMin, depthMax);
+                break;
+            case existed:
+                trees = getExistedExpression();
+                break;
+            default:
+                logger.error("Unknown expression generator mode: {}.", mode);
+        }
+        return trees;
+    }
+
+    private Set<ExpTree> getExistedExpression() {
+        String expFilepath = MessageFormat.format(this.dataFilePath, EXISTED_EXP);
+        List<String[]> expStrs = FileUtils.readCsv(expFilepath, '|', 0);
+        Set<ExpTree> exps = new HashSet<>(expStrs.size());
+        for (String[] expStr : expStrs) {
+            exps.add(ExpResolver.analysis(expStr[0]));
+        }
+        return exps;
     }
 
     /**
