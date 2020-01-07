@@ -1,6 +1,7 @@
 package com.range.stcfactor.expression.tree;
 
 import com.range.stcfactor.common.utils.RandomUtils;
+import com.range.stcfactor.expression.ExpPrintFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,15 +26,18 @@ public class ExpTreeFactory {
     private Map<Class, List<ExpModel>> functions;
     private Map<Class, List<ExpModel>> variables;
     private Map<ExpModel, Double> weights;
+    private ExpPrintFormat format;
 
     public ExpTreeFactory(Map<Class, List<ExpModel>> models,
                           Map<Class, List<ExpModel>> functions,
                           Map<Class, List<ExpModel>> variables,
-                          Map<ExpModel, Double> weights) {
+                          Map<ExpModel, Double> weights,
+                          ExpPrintFormat format) {
         this.models = models;
         this.functions = functions;
         this.variables = variables;
         this.weights = weights;
+        this.format = format;
     }
 
     public ExpTree buildSpecified(int depth, Class rootType) {
@@ -81,7 +85,7 @@ public class ExpTreeFactory {
      * 创建公式树
      */
     private ExpTree build(int depth, ExpTreeNode<ExpModel> root, Class rootType) {
-        ExpTree expTree = new ExpTree(depth);
+        ExpTree expTree = new ExpTree(depth, format);
         if (root == null) {
             root = new ExpTreeNode<>();
             root.setData(getRandomInfo(functions.get(rootType)));

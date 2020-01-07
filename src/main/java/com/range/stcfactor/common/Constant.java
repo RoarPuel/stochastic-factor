@@ -26,6 +26,8 @@ public class Constant {
     public static final String DEFAULT_EXP_DEPTH_MIN = "3";
     public static final String EXP_DEPTH_MAX = "exp.depth.max";
     public static final String DEFAULT_EXP_DEPTH_MAX = "5";
+    public static final String EXP_PRINT_FORMAT = "exp.print.format";
+    public static final String DEFAULT_EXP_PRINT_FORMAT = "default";
 
     public static final String DATA_FILE_PATH = "data.file.path";
     public static final String DEFAULT_DATA_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\data\\{0}.csv";

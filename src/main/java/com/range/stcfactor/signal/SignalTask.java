@@ -39,7 +39,7 @@ public class SignalTask implements Callable<DataScreen> {
         this.factory = factory;
         this.filter = filter;
 
-        INDArray close = (INDArray) factory.obtainData(ExpVariables.close);
+        INDArray close = (INDArray) factory.obtainData(ExpVariables.CLOSE);
         this.income = ArrayUtils.shift(close, -1).div(close).sub(1.0);
     }
 
@@ -84,9 +84,9 @@ public class SignalTask implements Callable<DataScreen> {
             Object data;
             String variableName = node.getData().getModelName();
             try {
-                ExpVariables variable = ExpVariables.valueOf(variableName);
+                ExpVariables variable = ExpVariables.valueOf(variableName.toUpperCase());
                 data = factory.obtainData(variable);
-                if (ExpVariables.day_num == variable) {
+                if (ExpVariables.DAY_NUM == variable) {
                     node.getData().setModelName(String.valueOf(data));
                 }
             } catch (Exception e) {

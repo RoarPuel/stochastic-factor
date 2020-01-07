@@ -1,6 +1,7 @@
 package com.range.stcfactor.expression.tree;
 
 import com.range.stcfactor.expression.ExpFunctionSymbol;
+import com.range.stcfactor.expression.ExpPrintFormat;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -18,14 +19,17 @@ public class ExpTree {
 
     private int depth;
     private ExpTreeNode<ExpModel> root;
+    private ExpPrintFormat format;
 
-    public ExpTree(int depth) {
+    public ExpTree(int depth, ExpPrintFormat format) {
         this.depth = depth;
+        this.format = format;
     }
 
-    public ExpTree(ExpTreeNode<ExpModel> root) {
+    public ExpTree(ExpTreeNode<ExpModel> root, ExpPrintFormat format) {
         this.depth = analysisDepth(root);
         this.root = root;
+        this.format = format;
     }
 
     public int getDepth() {
@@ -66,9 +70,22 @@ public class ExpTree {
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-        obtainExpression(root, stringBuilder);
-        return stringBuilder.toString();
+        StringBuilder sb = new StringBuilder();
+        obtainExpression(root, sb);
+        String result;
+        switch (format) {
+            case UPPER:
+                result = sb.toString().toUpperCase();
+                break;
+            case LOWER:
+                result = sb.toString().toLowerCase();
+                break;
+            case DEFAULT:
+            default:
+                result = sb.toString();
+                break;
+        }
+        return result;
     }
 
     /**
@@ -79,7 +96,7 @@ public class ExpTree {
     private void obtainExpression(ExpTreeNode<ExpModel> node, StringBuilder sb) {
         String symbol = "";
         try {
-            symbol = ExpFunctionSymbol.valueOf(node.getData().getModelName()).getSymbol();
+            symbol = ExpFunctionSymbol.valueOf(node.getData().getModelName().toUpperCase()).getSymbol();
         } catch (Exception e) {
             logger.debug("Not found function symbol");
         }

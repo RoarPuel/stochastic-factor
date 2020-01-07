@@ -3,12 +3,12 @@ package com.range.stcfactor.expression;
 import com.range.stcfactor.expression.tree.ExpModel;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeNode;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -28,12 +28,12 @@ public class ExpResolver {
     private static Pattern pattern;
 
     static {
-        methods = new HashMap<>();
+        methods = new CaseInsensitiveMap<>();
         for (Method method : ExpFunctions.class.getDeclaredMethods()) {
             methods.put(method.getName(), method);
         }
 
-        symbols = new HashMap<>();
+        symbols = new CaseInsensitiveMap<>();
         for (ExpFunctionSymbol symbol : ExpFunctionSymbol.values()) {
             symbols.put(symbol.getSymbol(), symbol.name());
         }
@@ -43,8 +43,12 @@ public class ExpResolver {
     }
 
     public static ExpTree analysis(String expStr) {
+        return analysis(expStr, ExpPrintFormat.DEFAULT);
+    }
+
+    public static ExpTree analysis(String expStr, ExpPrintFormat format) {
         expStr = replaceSymbol(expStr.replaceAll(" ", ""));
-        return new ExpTree(resolveNode(expStr));
+        return new ExpTree(resolveNode(expStr), format);
     }
 
     private static String replaceSymbol(String expStr) {
@@ -156,24 +160,26 @@ public class ExpResolver {
     }
 
     private static ExpModel getFunction(String functionName) {
+        String methodName = null;
         Class[] parametersType = null;
         Class returnType = null;
         try {
             Method method = methods.get(functionName);
+            methodName = method.getName();
             parametersType = method.getParameterTypes();
             returnType = method.getReturnType();
         } catch (Exception e) {
             logger.error("Get function: [{}] error.", functionName, e);
         }
-        return new ExpModel(functionName, parametersType, returnType);
+        return new ExpModel(methodName, parametersType, returnType);
     }
 
     private static ExpModel getVariable(String variableName) {
         Class returnType;
         try {
-            returnType = ExpVariables.valueOf(variableName).getType();
+            returnType = ExpVariables.valueOf(variableName.toUpperCase()).getType();
         } catch (Exception e) {
-            returnType = ExpVariables.day_num.getType();
+            returnType = ExpVariables.DAY_NUM.getType();
         }
         return new ExpModel(variableName, null, returnType);
     }

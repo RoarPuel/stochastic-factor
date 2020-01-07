@@ -192,7 +192,7 @@ public class SignalGenerator {
     private DataModel initData() {
         DataModel dataModel = new DataModel();
         for (ExpVariables var : ExpVariables.values()) {
-            if (ExpVariables.day_num == var) {
+            if (ExpVariables.DAY_NUM == var) {
                 continue;
             }
             DataBean bean = readData(var);
@@ -206,7 +206,7 @@ public class SignalGenerator {
     }
 
     private DataBean readData(ExpVariables type) {
-        String filepath = MessageFormat.format(this.dataFilePath, type.name());
+        String filepath = MessageFormat.format(this.dataFilePath, type.name().toLowerCase());
         logger.info(">>>>> Start load [{}] data from [{}].", type.name(), filepath);
         List<String> headers = new ArrayList<>();
         List<Date> indexes = new ArrayList<>();
@@ -258,6 +258,9 @@ public class SignalGenerator {
         File usefulFile = new File(summaryFilepath);
         File uselessFile = new File(uselessFilepath);
         try {
+            if (usefulFile.getParentFile() != null && !usefulFile.getParentFile().exists()) {
+                usefulFile.getParentFile().mkdirs();
+            }
             if (!usefulFile.exists()) {
                 usefulFile.createNewFile();
                 FileUtils.writeCsv(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, Collections.singletonList(FACTOR_SUMMARY_HEADER), false);

@@ -13,45 +13,45 @@ public enum ExpVariables {
     /**
      * open
      */
-    open,
+    OPEN,
 
     /**
      * high
      */
-    high,
+    HIGH,
 
     /**
      * low
      */
-    low,
+    LOW,
 
     /**
      * close
      */
-    close,
+    CLOSE,
 
     /**
      * volume
      */
-    vol,
+    VOL,
 
     /**
      * share
      */
-    share,
+    SHARE,
 
     /**
      * turnover
      */
-    turnover,
+    TURNOVER,
 
     /**
      * day_num
      */
-    day_num;
+    DAY_NUM;
 
     public Class getType() {
-        if (this == day_num) {
+        if (this == DAY_NUM) {
             return Integer.class;
         } else {
             return Constant.DEFAULT_TYPE;

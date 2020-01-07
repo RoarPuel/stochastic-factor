@@ -11,22 +11,22 @@ public enum ExpFunctionSymbol {
     /**
      * sum
      */
-    sum("+"),
+    SUM("+"),
 
     /**
      * sub
      */
-    sub("-"),
+    SUB("-"),
 
     /**
      * mul
      */
-    mul("*"),
+    MUL("*"),
 
     /**
      * div
      */
-    div("/");
+    DIV("/");
 
     private String symbol;
 

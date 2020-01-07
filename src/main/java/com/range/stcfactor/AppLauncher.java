@@ -36,6 +36,7 @@ public class AppLauncher {
         logger.info("     {} = {}", Constant.EXP_TOTAL, config.getProperty(Constant.EXP_TOTAL));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MIN, config.getProperty(Constant.EXP_DEPTH_MIN));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MAX, config.getProperty(Constant.EXP_DEPTH_MAX));
+        logger.info("     {} = {}", Constant.EXP_PRINT_FORMAT, config.getProperty(Constant.EXP_PRINT_FORMAT));
         logger.info("     {} = {}", Constant.DATA_FILE_PATH, config.getProperty(Constant.DATA_FILE_PATH));
         logger.info("     {} = {}", Constant.FACTOR_FILE_PATH, config.getProperty(Constant.FACTOR_FILE_PATH));
         logger.info("     {} = {}", Constant.FILTER_GROUP_SETTING, config.getProperty(Constant.FILTER_GROUP_SETTING));

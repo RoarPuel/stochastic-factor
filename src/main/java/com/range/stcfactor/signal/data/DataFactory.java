@@ -23,7 +23,7 @@ public class DataFactory {
 
     public Object obtainData(ExpVariables variable) {
         Object data;
-        if (ExpVariables.day_num == variable) {
+        if (ExpVariables.DAY_NUM == variable) {
             data = RandomUtils.getRandomNum(2, 243);
         } else {
             data = dataModel.getData(variable);

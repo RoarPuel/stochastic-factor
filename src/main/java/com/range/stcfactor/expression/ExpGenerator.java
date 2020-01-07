@@ -35,6 +35,7 @@ public class ExpGenerator {
     private int total;
     private int depthMin;
     private int depthMax;
+    private ExpPrintFormat format;
 
     private String dataFilePath;
 
@@ -46,10 +47,12 @@ public class ExpGenerator {
         this.depthMin = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MIN, Constant.DEFAULT_EXP_DEPTH_MIN));
         this.depthMax = Integer.parseInt(config.getProperty(Constant.EXP_DEPTH_MAX, Constant.DEFAULT_EXP_DEPTH_MAX));
         this.dataFilePath = config.getProperty(Constant.DATA_FILE_PATH, Constant.DEFAULT_DATA_FILE_PATH);
+        this.format = ExpPrintFormat.valueOf(config.getProperty(Constant.EXP_PRINT_FORMAT, Constant.DEFAULT_EXP_PRINT_FORMAT).toUpperCase());
         this.factory = new ExpTreeFactory(initModels(),
-                                    initFunctions(),
-                                    initVariables(),
-                                    initWeights());
+                                        initFunctions(),
+                                        initVariables(),
+                                        initWeights(),
+                                        this.format);
     }
 
     /**
@@ -157,7 +160,7 @@ public class ExpGenerator {
         List<String[]> expStrs = FileUtils.readCsv(expFilepath, '|', 0);
         Set<ExpTree> exps = new HashSet<>(expStrs.size());
         for (String[] expStr : expStrs) {
-            exps.add(ExpResolver.analysis(expStr[0]));
+            exps.add(ExpResolver.analysis(expStr[0], this.format));
         }
         return exps;
     }
