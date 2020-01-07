@@ -1,6 +1,10 @@
 package com.range.stcfactor.expression.tree;
 
+import com.range.stcfactor.expression.ExpFunctionSymbol;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * 树
@@ -9,6 +13,8 @@ import org.apache.commons.collections4.CollectionUtils;
  * @create 2019-07-29
  */
 public class ExpTree {
+
+    private static final Logger logger = LogManager.getLogger(ExpTree.class);
 
     private int depth;
     private ExpTreeNode<ExpModel> root;
@@ -71,14 +77,27 @@ public class ExpTree {
      * @param sb 公式字符串
      */
     private void obtainExpression(ExpTreeNode<ExpModel> node, StringBuilder sb) {
-        sb.append(node.getData().getModelName());
+        String symbol = "";
+        try {
+            symbol = ExpFunctionSymbol.valueOf(node.getData().getModelName()).getSymbol();
+        } catch (Exception e) {
+            logger.debug("Not found function symbol");
+        }
+
+        if (StringUtils.isEmpty(symbol)) {
+            sb.append(node.getData().getModelName());
+        }
         if (CollectionUtils.isNotEmpty(node.getChildNodes())) {
             sb.append("(");
             int index = 0;
             for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {
                 obtainExpression(n, sb);
                 if (++index < node.getChildNodes().size()) {
-                    sb.append(",");
+                    if (StringUtils.isEmpty(symbol)) {
+                        sb.append(", ");
+                    } else {
+                        sb.append(" ").append(symbol).append(" ");
+                    }
                 }
             }
             sb.append(")");

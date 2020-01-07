@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author zrj5865@163.com
@@ -22,16 +24,49 @@ public class ExpResolver {
     private static final Logger logger = LogManager.getLogger(ExpResolver.class);
 
     private static Map<String, Method> methods;
+    private static Map<String, String> symbols;
+    private static Pattern pattern;
 
     static {
         methods = new HashMap<>();
         for (Method method : ExpFunctions.class.getDeclaredMethods()) {
             methods.put(method.getName(), method);
         }
+
+        symbols = new HashMap<>();
+        for (ExpFunctionSymbol symbol : ExpFunctionSymbol.values()) {
+            symbols.put(symbol.getSymbol(), symbol.name());
+        }
+        StringBuilder sb = new StringBuilder();
+        symbols.keySet().forEach(s -> sb.append("\\").append(s));
+        pattern = Pattern.compile(sb.insert(0, "[").append("]").toString());
     }
 
     public static ExpTree analysis(String expStr) {
+        expStr = replaceSymbol(expStr.replaceAll(" ", ""));
         return new ExpTree(resolveNode(expStr));
+    }
+
+    private static String replaceSymbol(String expStr) {
+        Matcher matcher = pattern.matcher(expStr);
+        if (matcher.find()) {
+            StringBuilder sb = new StringBuilder(expStr);
+            int symbolIndex = matcher.start();
+            // 匹配左边公式
+            int start;
+            if (expStr.toCharArray()[symbolIndex - 1] == ')') {
+                int left = matchLeftParenthesis(expStr.substring(0, symbolIndex));
+                start = expStr.substring(0, left - 1).lastIndexOf('(');
+            } else {
+                start = expStr.substring(0, symbolIndex).lastIndexOf('(');
+            }
+            // 替换符号为函数
+            String function = symbols.get(String.valueOf(expStr.toCharArray()[symbolIndex]));
+            expStr = sb.replace(symbolIndex, symbolIndex + 1, ",")
+                        .insert(start, function).toString();
+            expStr = replaceSymbol(expStr);
+        }
+        return expStr;
     }
 
     private static ExpTreeNode<ExpModel> resolveNode(String expStr) {
@@ -53,31 +88,9 @@ public class ExpResolver {
         return node;
     }
 
-    private static ExpModel getFunction(String functionName) {
-        Class[] parametersType = null;
-        Class returnType = null;
-        try {
-            Method method = methods.get(functionName);
-            parametersType = method.getParameterTypes();
-            returnType = method.getReturnType();
-        } catch (Exception e) {
-            logger.error("Get function: [{}] error.", functionName, e);
-        }
-        return new ExpModel(functionName, parametersType, returnType);
-    }
-
-    private static ExpModel getVariable(String variableName) {
-        Class returnType;
-        try {
-            returnType = ExpVariables.valueOf(variableName).getType();
-        } catch (Exception e) {
-            returnType = ExpVariables.day_num.getType();
-        }
-        return new ExpModel(variableName, null, returnType);
-    }
-
     private static List<String> splitParameters(String parameterStr) {
         List<String> result = new ArrayList<>();
+        // 左右括号截取
         parameterStr = parameterStr.substring(1, parameterStr.length() - 1);
         while (parameterStr.length() > 0) {
             int left = parameterStr.indexOf("(");
@@ -106,11 +119,6 @@ public class ExpResolver {
 
     private static int matchRightParenthesis(String parameterStr) {
         int left = parameterStr.indexOf("(");
-        if (left < 0) {
-            logger.error("Expression: [{}] is not start with '('.", parameterStr);
-            return left;
-        }
-
         char[] characters = parameterStr.substring(left).toCharArray();
         Stack<Integer> stack = new Stack<>();
         for (int i=0; i<characters.length; i++) {
@@ -126,6 +134,48 @@ public class ExpResolver {
             }
         }
         return left;
+    }
+
+    private static int matchLeftParenthesis(String parameterStr) {
+        int right = parameterStr.lastIndexOf(")");
+        char[] characters = parameterStr.substring(0, right + 1).toCharArray();
+        Stack<Integer> stack = new Stack<>();
+        for (int i=characters.length-1; i>=0; i--) {
+            char character = characters[i];
+            if (')' == character) {
+                stack.push(i);
+            } else if ('(' == character) {
+                stack.pop();
+            }
+
+            if (stack.isEmpty()) {
+                return i;
+            }
+        }
+        return right;
+    }
+
+    private static ExpModel getFunction(String functionName) {
+        Class[] parametersType = null;
+        Class returnType = null;
+        try {
+            Method method = methods.get(functionName);
+            parametersType = method.getParameterTypes();
+            returnType = method.getReturnType();
+        } catch (Exception e) {
+            logger.error("Get function: [{}] error.", functionName, e);
+        }
+        return new ExpModel(functionName, parametersType, returnType);
+    }
+
+    private static ExpModel getVariable(String variableName) {
+        Class returnType;
+        try {
+            returnType = ExpVariables.valueOf(variableName).getType();
+        } catch (Exception e) {
+            returnType = ExpVariables.day_num.getType();
+        }
+        return new ExpModel(variableName, null, returnType);
     }
 
 }

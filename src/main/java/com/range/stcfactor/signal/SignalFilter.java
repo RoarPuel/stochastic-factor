@@ -310,7 +310,7 @@ public class SignalFilter {
                 effectiveRowF.add(valueF);
                 effectiveRowC.add(valueC);
             }
-            if (CollectionUtils.isNotEmpty(effectiveRowF) || CollectionUtils.isNotEmpty(effectiveRowC)) {
+            if (CollectionUtils.isEmpty(effectiveRowF) || CollectionUtils.isEmpty(effectiveRowC)) {
                 continue;
             }
             double corr = transform.apply(Nd4j.create(effectiveRowF), Nd4j.create(effectiveRowC));
