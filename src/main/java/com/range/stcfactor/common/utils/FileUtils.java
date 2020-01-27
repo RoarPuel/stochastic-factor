@@ -49,13 +49,25 @@ public class FileUtils {
         return lines;
     }
 
-    public static void writeCsv(String filepath, char separator, String[] data) {
+    public static void writeCsvAppend(String filepath, char separator, String[] data) {
         writeCsv(filepath, separator, Collections.singletonList(data), true);
     }
 
-    public static void writeCsv(String filepath, char separator, List<String[]> data, boolean append) {
+    public static void writeCsvAppend(String filepath, char separator, List<String[]> data) {
+        writeCsv(filepath, separator, data, true);
+    }
+
+    public static void writeCsvNew(String filepath, char separator, String[] data) {
+        writeCsv(filepath, separator, Collections.singletonList(data), false);
+    }
+
+    public static void writeCsvNew(String filepath, char separator, List<String[]> data) {
+        writeCsv(filepath, separator, data, false);
+    }
+
+    private static void writeCsv(String filepath, char separator, List<String[]> data, boolean append) {
         File file = new File(filepath);
-        if (!file.exists()) {
+        if (!file.exists() && append) {
             logger.error("File: [{}] is not existed.", filepath);
             return;
         }
@@ -144,7 +156,7 @@ public class FileUtils {
                 String[] rowStr = new String[rowData.columns() + 1];
                 rowStr[0] = parseDateToStr(indexes.get(i));
                 for (int j=0; j<rowData.columns(); j++) {
-                    Double num = rowData.getDouble(j);
+                    double num = rowData.getDouble(j);
                     rowStr[j + 1] = Double.isNaN(num) ? "" : String.valueOf(num);
                 }
                 writer.writeNext(rowStr);

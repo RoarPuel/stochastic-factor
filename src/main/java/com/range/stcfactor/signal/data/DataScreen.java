@@ -1,6 +1,8 @@
 package com.range.stcfactor.signal.data;
 
+import com.range.stcfactor.common.utils.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 /**
  * @author zrj5865@163.com
@@ -9,7 +11,10 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 public class DataScreen {
 
     private String expression;
-    private INDArray factor;
+    private INDArray sourceFactor;
+    private INDArray effectFactor;
+    private INDArray sourceIncome;
+    private INDArray effectIncome;
     private boolean useful;
     private String uselessReason;
 
@@ -20,9 +25,21 @@ public class DataScreen {
     private double mutualIC;
     private double dayTurnoverRate;
 
-    public DataScreen(String expression, INDArray factor) {
+    public DataScreen(String expression, INDArray sourceFactor) {
         this.expression = expression;
-        this.factor = factor;
+        this.sourceFactor = sourceFactor;
+        this.effectFactor = sourceFactor.get(NDArrayIndex.interval(ArrayUtils.getNanCut(sourceFactor), sourceFactor.rows()), NDArrayIndex.all());
+        this.useful = true;
+        this.uselessReason = "useful";
+    }
+
+    public DataScreen(String expression, INDArray sourceFactor, INDArray sourceIncome) {
+        int cut = ArrayUtils.getNanCut(sourceFactor);
+        this.expression = expression;
+        this.sourceFactor = sourceFactor;
+        this.effectFactor = sourceFactor.get(NDArrayIndex.interval(cut, sourceFactor.rows()), NDArrayIndex.all());
+        this.sourceIncome = sourceIncome;
+        this.effectIncome = sourceIncome.get(NDArrayIndex.interval(cut, sourceIncome.rows()), NDArrayIndex.all());
         this.useful = true;
         this.uselessReason = "useful";
     }
@@ -35,12 +52,36 @@ public class DataScreen {
         this.expression = expression;
     }
 
-    public INDArray getFactor() {
-        return factor;
+    public INDArray getSourceFactor() {
+        return sourceFactor;
     }
 
-    public void setFactor(INDArray factor) {
-        this.factor = factor;
+    public void setSourceFactor(INDArray sourceFactor) {
+        this.sourceFactor = sourceFactor;
+    }
+
+    public INDArray getEffectFactor() {
+        return effectFactor;
+    }
+
+    public void setEffectFactor(INDArray effectFactor) {
+        this.effectFactor = effectFactor;
+    }
+
+    public INDArray getSourceIncome() {
+        return sourceIncome;
+    }
+
+    public void setSourceIncome(INDArray sourceIncome) {
+        this.sourceIncome = sourceIncome;
+    }
+
+    public INDArray getEffectIncome() {
+        return effectIncome;
+    }
+
+    public void setEffectIncome(INDArray effectIncome) {
+        this.effectIncome = effectIncome;
     }
 
     public boolean isUseful() {

@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -254,23 +253,12 @@ public class SignalGenerator {
         logger.info(">>>>> Start write factors.");
         // 初始化因子保存文件
         String summaryFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY);
-        String uselessFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY + "-useless");
         File usefulFile = new File(summaryFilepath);
-        File uselessFile = new File(uselessFilepath);
-        try {
-            if (usefulFile.getParentFile() != null && !usefulFile.getParentFile().exists()) {
-                usefulFile.getParentFile().mkdirs();
-            }
-            if (!usefulFile.exists()) {
-                usefulFile.createNewFile();
-                FileUtils.writeCsv(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, Collections.singletonList(FACTOR_SUMMARY_HEADER), false);
-            }
-            if (!uselessFile.exists()) {
-                uselessFile.createNewFile();
-            }
-        } catch (IOException e) {
-            logger.error("Create csv [{}] error.", summaryFilepath, e);
-            return;
+        if (usefulFile.getParentFile() != null && !usefulFile.getParentFile().exists()) {
+            usefulFile.getParentFile().mkdirs();
+        }
+        if (!usefulFile.exists()) {
+            FileUtils.writeCsvNew(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, FACTOR_SUMMARY_HEADER);
         }
 
         // 保存有效因子信息，获取历史最大No.续写
@@ -285,16 +273,13 @@ public class SignalGenerator {
         for (DataScreen screen : usefulScreens) {
             // Write summary
             String[] indicator = getIndicator(screen, lastNo++);
-            FileUtils.writeCsv(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, indicator);
+            FileUtils.writeCsvAppend(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, indicator);
             // Write factor
             String filepath = MessageFormat.format(this.factorFilePath, indicator[0]);
             List<Date> newIndexes = new ArrayList<>(indexes);
             List<String> newHeaders = new ArrayList<>(headers);
             newHeaders.add(0, "");
-            FileUtils.writeData(filepath,
-                                newHeaders,
-                                newIndexes.subList(newIndexes.size() - screen.getFactor().rows(), newIndexes.size()),
-                                screen.getFactor());
+            FileUtils.writeData(filepath, newHeaders, newIndexes, screen.getSourceFactor());
 
             index++;
             if (System.currentTimeMillis() - start > 1000 || index == usefulScreens.size()) {
@@ -305,13 +290,14 @@ public class SignalGenerator {
         }
 
         // 保存无效因子信息
+        String uselessFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY + "-useless");
         List<String[]> uselessIndicators = new ArrayList<>();
         uselessIndicators.add(FACTOR_SUMMARY_HEADER);
         lastNo = 1;
         for (DataScreen screen : uselessScreens) {
             uselessIndicators.add(getIndicator(screen, lastNo++));
         }
-        FileUtils.writeCsv(uselessFilepath, FACTOR_SUMMARY_SEPARATOR, uselessIndicators, false);
+        FileUtils.writeCsvNew(uselessFilepath, FACTOR_SUMMARY_SEPARATOR, uselessIndicators);
 
         logger.info(">>>>> Finish write factors.");
     }

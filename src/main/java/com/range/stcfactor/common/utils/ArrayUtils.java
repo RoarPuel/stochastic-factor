@@ -176,6 +176,18 @@ public class ArrayUtils {
         return arrayCopy;
     }
 
+    public static int getNanCut(INDArray array) {
+        int cut = 0;
+        for (int i=0; i<array.rows(); i++) {
+            if (ArrayUtils.isAllNan(array.getRow(i))) {
+                continue;
+            }
+            cut = i;
+            break;
+        }
+        return cut;
+    }
+
     public static Integer[] argSort(final INDArray array) {
         return argSort(array, true);
     }

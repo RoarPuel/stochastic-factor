@@ -61,15 +61,12 @@ public class SignalFilter {
     }
 
     public DataScreen screen(ExpTree exp, INDArray factor, INDArray income) {
-        int cut = getNanCut(factor);
-        factor = factor.get(NDArrayIndex.interval(cut, factor.rows()), NDArrayIndex.all());
-        income = income.get(NDArrayIndex.interval(cut, income.rows()), NDArrayIndex.all());
-        DataScreen screen = new DataScreen(exp.toString(), factor);
+        DataScreen screen = new DataScreen(exp.toString(), factor, income);
 
-        if (!calTotalEr(screen, income)                         // 总共的有效率
-                || !calDayEr(screen, income)                    // 每天有效率的均值
-                || !calTotalIC(screen, income)                  // 总共的IC
-                || !calGroupIC(screen, income)                  // 每天分组IC的均值
+        if (!calTotalEr(screen)                         // 总共的有效率
+                || !calDayEr(screen)                    // 每天有效率的均值
+                || !calTotalIC(screen)                  // 总共的IC
+                || !calGroupIC(screen)                  // 每天分组IC的均值
                 || !calDayTr(screen)                            // 每天换手率的均值
                 || !calMutualIC(screen, this.factorHistory)) {  // 与已有expression的IC
             return screen;
@@ -78,8 +75,9 @@ public class SignalFilter {
         return screen;
     }
 
-    private boolean calTotalEr(DataScreen screen, INDArray income) {
-        INDArray factor = screen.getFactor();
+    private boolean calTotalEr(DataScreen screen) {
+        INDArray factor = screen.getEffectFactor();
+        INDArray income = screen.getEffectIncome();
         screen.setTotalEffectiveRate(effectiveRate(factor, income));
 
         if (Double.isNaN(screen.getTotalEffectiveRate()) || screen.getTotalEffectiveRate() < this.totalEffectiveRateThreshold) {
@@ -93,8 +91,9 @@ public class SignalFilter {
         return true;
     }
 
-    private boolean calDayEr(DataScreen screen, INDArray income) {
-        INDArray factor = screen.getFactor();
+    private boolean calDayEr(DataScreen screen) {
+        INDArray factor = screen.getEffectFactor();
+        INDArray income = screen.getEffectIncome();
         List<Double> ers = new ArrayList<>();
         for (int i=0; i<income.rows(); i++) {
             INDArray rowF = factor.getRow(i);
@@ -121,8 +120,9 @@ public class SignalFilter {
         return true;
     }
 
-    private boolean calTotalIC(DataScreen screen, INDArray income) {
-        INDArray factor = screen.getFactor();
+    private boolean calTotalIC(DataScreen screen) {
+        INDArray factor = screen.getEffectFactor();
+        INDArray income = screen.getEffectIncome();
         screen.setTotalIC(calculateIC(factor, income, ArrayUtils::corr));
 
         if (Double.isNaN(screen.getTotalIC()) || screen.getTotalIC() < this.totalIcThreshold) {
@@ -136,8 +136,9 @@ public class SignalFilter {
         return true;
     }
 
-    private boolean calGroupIC(DataScreen screen, INDArray income) {
-        INDArray factor = screen.getFactor();
+    private boolean calGroupIC(DataScreen screen) {
+        INDArray factor = screen.getEffectFactor();
+        INDArray income = screen.getEffectIncome();
         screen.setGroupIC(calculateIC(factor, income, (effectiveRowF, effectiveRowC) -> {
             // 排序, 分组
             Integer[] sorts = ArrayUtils.argSort(effectiveRowF, false);
@@ -178,15 +179,13 @@ public class SignalFilter {
             screen.setUseful(false);
             screen.setUselessReason("Group information coefficient is " + screen.getGroupIC()
                     + " < " + this.groupIcThreshold + " (threshold)");
-            if (isInterrupt) {
-                return false;
-            }
+            return !isInterrupt;
         }
         return true;
     }
 
     private boolean calDayTr(DataScreen screen) {
-        INDArray factor = screen.getFactor();
+        INDArray factor = screen.getEffectFactor();
         List<Double> turnoverRates = new ArrayList<>();
         Set<Integer> lastTops = null;
         for (int i=0; i<factor.rows(); i++) {
@@ -224,7 +223,10 @@ public class SignalFilter {
 
     public boolean calMutualIC(DataScreen screen, List<DataScreen> histories) {
         for (DataScreen comparer : histories) {
-            screen.setMutualIC(calculateIC(screen.getFactor(), comparer.getFactor(), ArrayUtils::corr));
+            int cut = Math.max(ArrayUtils.getNanCut(screen.getSourceFactor()), ArrayUtils.getNanCut(comparer.getSourceFactor()));
+            INDArray effectFactor = screen.getSourceFactor().get(NDArrayIndex.interval(cut, screen.getSourceFactor().rows()), NDArrayIndex.all());
+            INDArray effectComparer = comparer.getSourceFactor().get(NDArrayIndex.interval(cut, comparer.getSourceFactor().rows()), NDArrayIndex.all());
+            screen.setMutualIC(calculateIC(effectFactor, effectComparer, ArrayUtils::corr));
 
             if (!Double.isNaN(screen.getMutualIC()) && screen.getMutualIC() > this.mutualIcThreshold) {
                 screen.setUseful(false);
@@ -236,18 +238,6 @@ public class SignalFilter {
             }
         }
         return true;
-    }
-
-    private int getNanCut(INDArray factor) {
-        int cut = 0;
-        for (int i=0; i<factor.rows(); i++) {
-            if (ArrayUtils.isAllNan(factor.getRow(i))) {
-                continue;
-            }
-            cut = i;
-            break;
-        }
-        return cut;
     }
 
     private boolean isInvalid(double num) {
