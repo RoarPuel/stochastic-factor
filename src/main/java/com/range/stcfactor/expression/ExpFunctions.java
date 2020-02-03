@@ -3,6 +3,7 @@ package com.range.stcfactor.expression;
 import com.range.stcfactor.common.utils.ArrayUtils;
 import com.range.stcfactor.common.helper.RollingArray;
 import com.range.stcfactor.common.helper.RollingDouble;
+import com.range.stcfactor.signal.data.DataFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
@@ -16,39 +17,49 @@ import java.util.List;
  */
 public class ExpFunctions {
 
-    public static INDArray sum(INDArray arr1, INDArray arr2) {
+    private DataFactory factory;
+
+    public ExpFunctions() {
+
+    }
+
+    public ExpFunctions(DataFactory factory) {
+        this.factory = factory;
+    }
+
+    public INDArray sum(INDArray arr1, INDArray arr2) {
         return arr1.add(arr2);
     }
 
-    public static INDArray sub(INDArray arr1, INDArray arr2) {
+    public INDArray sub(INDArray arr1, INDArray arr2) {
         return arr1.sub(arr2);
     }
 
-    public static INDArray mul(INDArray arr1, INDArray arr2) {
+    public INDArray mul(INDArray arr1, INDArray arr2) {
         return arr1.mul(arr2);
     }
 
-    public static INDArray div(INDArray arr1, INDArray arr2) {
+    public INDArray div(INDArray arr1, INDArray arr2) {
         return arr1.div(arr2);
     }
 
-    public static INDArray tsSum(INDArray arr, Integer dayNum) {
+    public INDArray tsSum(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.sum(0));
     }
 
-    public static INDArray std(INDArray arr, Integer dayNum) {
+    public INDArray std(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.std(0));
     }
 
-    public static INDArray mean(INDArray arr, Integer dayNum) {
+    public INDArray mean(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.mean(0));
     }
 
-    public static INDArray prod(INDArray arr, Integer dayNum) {
+    public INDArray prod(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingArray) array -> array.prod(0));
     }
 
-    public static INDArray tsMin(INDArray arr, Integer dayNum) {
+    public INDArray tsMin(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             double min = Double.NaN;
             for (double current : array) {
@@ -60,11 +71,11 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray llv(INDArray arr, Integer dayNum) {
+    public INDArray llv(INDArray arr, Integer dayNum) {
         return tsMin(arr, dayNum);
     }
 
-    public static INDArray tsMax(INDArray arr, Integer dayNum) {
+    public INDArray tsMax(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             double max = Double.NaN;
             for (double current : array) {
@@ -76,11 +87,11 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray hhv(INDArray arr, Integer dayNum) {
+    public INDArray hhv(INDArray arr, Integer dayNum) {
         return tsMax(arr, dayNum);
     }
 
-    public static INDArray tsRank(INDArray arr, Integer dayNum) {
+    public INDArray tsRank(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             double n = (double) array.length;
             Integer[] sort = ArrayUtils.argSort(array);
@@ -89,65 +100,65 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray cov(INDArray arr1, INDArray arr2, Integer dayNum) {
+    public INDArray cov(INDArray arr1, INDArray arr2, Integer dayNum) {
         return ArrayUtils.rolling(arr1, arr2, dayNum, ArrayUtils::cov);
     }
 
-    public static INDArray corr(INDArray arr1, INDArray arr2, Integer dayNum) {
+    public INDArray corr(INDArray arr1, INDArray arr2, Integer dayNum) {
         return ArrayUtils.rolling(arr1, arr2, dayNum, ArrayUtils::corr);
     }
 
-    public static INDArray abs(INDArray arr) {
+    public INDArray abs(INDArray arr) {
         return Transforms.abs(arr);
     }
 
-    public static INDArray relu(INDArray arr) {
+    public INDArray relu(INDArray arr) {
         return Transforms.relu(arr);
     }
 
-    public static INDArray sigmoid(INDArray arr) {
+    public INDArray sigmoid(INDArray arr) {
         return Transforms.sigmoid(arr);
     }
 
-    public static INDArray log(INDArray arr) {
+    public INDArray log(INDArray arr) {
         return Transforms.log(Transforms.abs(arr.add(1.0)));
     }
 
-    public static INDArray sqrt(INDArray arr) {
+    public INDArray sqrt(INDArray arr) {
         return Transforms.sqrt(Transforms.abs(arr));
     }
 
-    public static INDArray square(INDArray arr) {
+    public INDArray square(INDArray arr) {
         return Transforms.pow(arr, 2);
     }
 
-    public static INDArray sign(INDArray arr) {
+    public INDArray sign(INDArray arr) {
         return Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
     }
 
-    public static INDArray exp(INDArray arr) {
+    public INDArray exp(INDArray arr) {
         INDArray array = ArrayUtils.replaceNan(arr, 0.0);
         INDArray arrNorm = arr.sub(array.mean(0)).div(array.std(0).add(1.0));
         return Transforms.exp(arrNorm);
     }
 
-    public static INDArray rank(INDArray arr) {
+    public INDArray rank(INDArray arr) {
         return ArrayUtils.rank(arr, false, "first", false);
     }
 
-    public static INDArray rankPct(INDArray arr) {
+    public INDArray rankPct(INDArray arr) {
         return ArrayUtils.rank(arr, false, "first", true);
     }
 
-    public static INDArray delay(INDArray arr, Integer dayNum) {
+    public INDArray delay(INDArray arr, Integer dayNum) {
         return ArrayUtils.shift(arr, dayNum);
     }
 
-    public static INDArray delta(INDArray arr, Integer dayNum) {
+    public INDArray delta(INDArray arr, Integer dayNum) {
         return arr.sub(ArrayUtils.shift(arr, dayNum));
     }
 
-    public static INDArray decayLinear(INDArray arr, Integer dayNum) {
+    public INDArray decayLinear(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             final double[] sum = {0.0};
             List<Double> decayWeights = ArrayUtils.rangeClosed(1.0, (double) array.length, 1.0, num -> {
@@ -162,32 +173,32 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray min(INDArray arr1, INDArray arr2) {
+    public INDArray min(INDArray arr1, INDArray arr2) {
         INDArray arrDelta = arr1.sub(arr2);
         return arr1.sub(ArrayUtils.replaceLess(arrDelta, 0.0,0.0));
     }
 
-    public static INDArray max(INDArray arr1, INDArray arr2) {
+    public INDArray max(INDArray arr1, INDArray arr2) {
         INDArray arrDelta = arr1.sub(arr2);
         return arr1.sub(ArrayUtils.replaceGreater(arrDelta, 0.0, 0.0));
     }
 
-    public static INDArray count(INDArray arr, Integer dayNum) {
+    public INDArray count(INDArray arr, Integer dayNum) {
         INDArray arrCon = Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
         return tsSum(ArrayUtils.replaceEquals(arrCon, -1.0, 0.0), dayNum);
     }
 
-    public static INDArray sumIf(INDArray arr, Integer dayNum) {
+    public INDArray sumIf(INDArray arr, Integer dayNum) {
         INDArray arrCon = Transforms.sign(ArrayUtils.replaceNan(arr, 0.0));
         INDArray arrSelect = arr.mul(arrCon);
         return tsSum(arrSelect, dayNum);
     }
 
-    public static INDArray sma(INDArray arr, Integer dayNum1, Integer dayNum2) {
+    public INDArray sma(INDArray arr, Integer dayNum1, Integer dayNum2) {
         return mean(arr, dayNum1>=dayNum2 ? dayNum1/dayNum2 : dayNum2/dayNum1);
     }
 
-    public static INDArray highDay(INDArray arr, Integer dayNum) {
+    public INDArray highDay(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             double max = Double.NaN;
             int index = 0;
@@ -202,7 +213,7 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray lowDay(INDArray arr, Integer dayNum) {
+    public INDArray lowDay(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             double min = Double.NaN;
             int index = 0;
@@ -217,11 +228,11 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray ret(INDArray arr, Integer dayNum) {
+    public INDArray ret(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (array1, array2) -> array1.div(array2).sub(1.0));
     }
 
-    public static INDArray wma(INDArray arr, Integer dayNum) {
+    public INDArray wma(INDArray arr, Integer dayNum) {
         return ArrayUtils.rolling(arr, dayNum, (RollingDouble) array -> {
             final int[] index = {array.length - 1};
             final double[] sum = {0.0};
@@ -235,14 +246,14 @@ public class ExpFunctions {
         });
     }
 
-    public static INDArray regBeta(INDArray arr1, INDArray arr2, Integer dayNum) {
+    public INDArray regBeta(INDArray arr1, INDArray arr2, Integer dayNum) {
         INDArray arrCorr = corr(arr1, arr2, dayNum);
         INDArray arrStd1 = std(arr1, dayNum);
         INDArray arrStd2 = std(arr2, dayNum);
         return arrCorr.mul(arrStd2).div(arrStd1);
     }
 
-    public static INDArray regResi(INDArray arr1, INDArray arr2, Integer dayNum) {
+    public INDArray regResi(INDArray arr1, INDArray arr2, Integer dayNum) {
         INDArray arrBeta = regBeta(arr1, arr2, dayNum);
         return arr2.sub(arr1.mul(arrBeta));
     }

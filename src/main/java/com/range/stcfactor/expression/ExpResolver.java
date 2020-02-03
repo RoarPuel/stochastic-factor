@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,9 @@ public class ExpResolver {
     static {
         methods = new CaseInsensitiveMap<>();
         for (Method method : ExpFunctions.class.getDeclaredMethods()) {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                continue;
+            }
             methods.put(method.getName(), method);
         }
 

@@ -31,7 +31,7 @@ public class ArrayUtils {
 
     private static final Logger logger = LogManager.getLogger(ArrayUtils.class);
 
-    public static INDArray rolling(INDArray array, Integer window, RollingArray transform) {
+    public static INDArray rolling(final INDArray array, Integer window, RollingArray transform) {
         long[] shape = {array.rows(), array.columns()};
         INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
         for (int current=0; current < array.rows(); current++) {
@@ -48,7 +48,7 @@ public class ArrayUtils {
         return result;
     }
 
-    public static INDArray rolling(INDArray array, Integer window, Rolling2Array transform) {
+    public static INDArray rolling(final INDArray array, Integer window, Rolling2Array transform) {
         long[] shape = {array.rows(), array.columns()};
         INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
         for (int current=0; current < array.rows(); current++) {
@@ -64,7 +64,7 @@ public class ArrayUtils {
         return result;
     }
 
-    public static INDArray rolling(INDArray array, Integer window, RollingDouble transform) {
+    public static INDArray rolling(final INDArray array, Integer window, RollingDouble transform) {
         int rows = array.rows();
         int columns = array.columns();
         double[][] result = new double[rows][columns];
@@ -100,7 +100,7 @@ public class ArrayUtils {
         return Nd4j.create(result);
     }
 
-    public static INDArray rolling(INDArray array1, INDArray array2, Integer window, Rolling2Double transform) {
+    public static INDArray rolling(final INDArray array1, final INDArray array2, Integer window, Rolling2Double transform) {
         int rows = array1.rows();
         int columns = array1.columns();
         double[][] result = new double[rows][columns];
@@ -129,7 +129,7 @@ public class ArrayUtils {
         return Nd4j.create(result);
     }
 
-    private static boolean hasNan(INDArray array) {
+    private static boolean hasNan(final INDArray array) {
         boolean hasNan = false;
         for (int i=0; i<array.rows(); i++) {
             INDArray row = array.getRow(i);
@@ -147,36 +147,36 @@ public class ArrayUtils {
         return hasNan;
     }
 
-    public static boolean isAllNan(INDArray array) {
+    public static boolean isAllNan(final INDArray array) {
         int countNan = Nd4j.getExecutioner().exec(new MatchCondition(array, Conditions.isNan())).getInt(0);
         return countNan == array.rows() * array.columns();
     }
 
-    public static INDArray replaceNan(INDArray array, Double set) {
+    public static INDArray replaceNan(final INDArray array, Double set) {
         INDArray arrayCopy = array.dup();
         BooleanIndexing.replaceWhere(arrayCopy, set, Conditions.isNan());
         return arrayCopy;
     }
 
-    public static INDArray replaceEquals(INDArray array, Double equal, Double set) {
+    public static INDArray replaceEquals(final INDArray array, Double equal, Double set) {
         INDArray arrayCopy = array.dup();
         BooleanIndexing.replaceWhere(arrayCopy, set, Conditions.equals(equal));
         return arrayCopy;
     }
 
-    public static INDArray replaceLess(INDArray array, Double less, Double set) {
+    public static INDArray replaceLess(final INDArray array, Double less, Double set) {
         INDArray arrayCopy = array.dup();
         BooleanIndexing.replaceWhere(arrayCopy, set, Conditions.lessThan(less));
         return arrayCopy;
     }
 
-    public static INDArray replaceGreater(INDArray array, Double greater, Double set) {
+    public static INDArray replaceGreater(final INDArray array, Double greater, Double set) {
         INDArray arrayCopy = array.dup();
         BooleanIndexing.replaceWhere(arrayCopy, set, Conditions.greaterThan(greater));
         return arrayCopy;
     }
 
-    public static int getNanCut(INDArray array) {
+    public static int getNanCut(final INDArray array) {
         int cut = 0;
         for (int i=0; i<array.rows(); i++) {
             if (ArrayUtils.isAllNan(array.getRow(i))) {
@@ -189,16 +189,11 @@ public class ArrayUtils {
     }
 
     public static Integer[] argSort(final INDArray array) {
-        return argSort(array, true);
+        return argSort(array.toDoubleVector(), true);
     }
 
     public static Integer[] argSort(final INDArray array, final boolean ascending) {
-        Integer[] indexes = new Integer[array.columns()];
-        for (int i = 0; i < indexes.length; i++) {
-            indexes[i] = i;
-        }
-        Arrays.sort(indexes, (i1, i2) -> (ascending ? 1 : -1) * Double.compare(array.getDouble(i1), array.getDouble(i2)));
-        return indexes;
+        return argSort(array.toDoubleVector(), ascending);
     }
 
     public static Integer[] argSort(final double[] array) {
@@ -214,7 +209,7 @@ public class ArrayUtils {
         return indexes;
     }
 
-    public static INDArray shift(INDArray array, Integer num) {
+    public static INDArray shift(final INDArray array, Integer num) {
         long[] shape = {array.rows(), array.columns()};
         INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
         for (int current=0; current < array.rows(); current++) {
@@ -265,16 +260,10 @@ public class ArrayUtils {
         return range;
     }
 
-    public static Double cov(INDArray array1, INDArray array2) {
+    public static Double cov(final INDArray array1, final INDArray array2) {
 //        double ans = (double) array1.sub(array1.meanNumber()).mul(array2.sub(array2.meanNumber())).sumNumber();
 //        return ans / (array1.columns() - 1);
-        double mean1 = mean(array1);
-        double mean2 = mean(array2);
-        double ans = 0.0;
-        for (int i=0; i<array1.columns(); i++) {
-            ans += (array1.getDouble(i) - mean1) * (array2.getDouble(i) - mean2);
-        }
-        return ans / (array1.columns() - 1);
+        return cov(array1.toDoubleVector(), array2.toDoubleVector());
     }
 
     public static Double cov(double[] array1, double[] array2) {
@@ -287,28 +276,16 @@ public class ArrayUtils {
         return ans / (array1.length - 1);
     }
 
-    public static Double corr(INDArray array1, INDArray array2) {
+    public static Double corr(final INDArray array1, final INDArray array2) {
 //        double ans = (double) array1.sub(array1.meanNumber()).mul(array2.sub(array2.meanNumber())).sumNumber();
 //        INDArray sub1 = array1.sub(array1.meanNumber());
 //        INDArray sub2 = array2.sub(array2.meanNumber());
 //        double anx = (double) Transforms.pow(sub1, 2).sumNumber() * (double) Transforms.pow(sub2, 2).sumNumber();
 //        return ans / Math.sqrt(anx);
-        double mean1 = mean(array1);
-        double mean2 = mean(array2);
-        double ans = 0.0;
-        double anx1 = 0.0;
-        double anx2 = 0.0;
-        for (int i=0; i<array1.columns(); i++) {
-            double sub1 = array1.getDouble(i) - mean1;
-            double sub2 = array2.getDouble(i) - mean2;
-            ans += sub1 * sub2;
-            anx1 += Math.pow(sub1, 2);
-            anx2 += Math.pow(sub2, 2);
-        }
-        return ans / Math.sqrt(anx1 * anx2);
+        return corr(array1.toDoubleVector(), array2.toDoubleVector());
     }
 
-    public static Double corr(double[] array1, double[] array2) {
+    public static Double corr(final double[] array1, final double[] array2) {
         double mean1 = ArrayUtils.mean(array1);
         double mean2 = ArrayUtils.mean(array2);
         double ans = 0.0;
@@ -324,27 +301,88 @@ public class ArrayUtils {
         return ans / Math.sqrt(anx1 * anx2);
     }
 
-    private static double mean(INDArray array) {
+    private static double mean(final double[] array) {
         double sum = 0.0;
-        for (int i=0; i<array.columns(); i++) {
-            sum += array.getDouble(i);
-        }
-        return sum / array.columns();
-    }
-
-    private static double mean(double[] array) {
-        double sum = 0.0;
-        for (int i=0; i<array.length; i++) {
-            sum += array[i];
+        for (double v : array) {
+            sum += v;
         }
         return sum / array.length;
     }
 
-    public static INDArray rank(INDArray arr) {
+    public static double meanWithoutNan(final INDArray array) {
+        return meanWithoutNan(array.toDoubleMatrix());
+    }
+
+    public static double meanWithoutNan(final double[][] array) {
+        double sum = 0.0;
+        long count = 0;
+        for (double[] row : array) {
+            for (double col : row) {
+                if (isInvalid(col)) {
+                    continue;
+                }
+                sum += col;
+                count++;
+            }
+        }
+        return sum / count;
+    }
+
+    public static double stdWithoutNan(final INDArray array) {
+        return stdWithoutNan(array.toDoubleMatrix());
+    }
+
+    public static double stdWithoutNan(final double[][] array) {
+        final double mean = meanWithoutNan(array);
+        double sum = 0.0;
+        long count = 0;
+        for (double[] row : array) {
+            for (double col : row) {
+                if (isInvalid(col)) {
+                    continue;
+                }
+                sum += Math.pow(col - mean, 2);
+                count++;
+            }
+        }
+        return Math.sqrt(sum / count);
+    }
+
+    public static double kurtosisWithoutNan(final INDArray array) {
+        return kurtosisWithoutNan(array.toDoubleMatrix());
+    }
+
+    public static double kurtosisWithoutNan(final double[][] array) {
+        final double mean = meanWithoutNan(array);
+        double numerator = 0.0;
+        double denominator = 0.0;
+        long count = 0;
+        for (double[] row : array) {
+            for (double col : row) {
+                if (isInvalid(col)) {
+                    continue;
+                }
+                numerator += Math.pow(col - mean, 4);
+                denominator += Math.pow(col - mean, 2);
+                count++;
+            }
+        }
+        return (numerator / count) / Math.pow(denominator / count, 2) - 3;
+    }
+
+    public static boolean isValid(double number) {
+        return !Double.isNaN(number) && Double.isFinite(number);
+    }
+
+    public static boolean isInvalid(double number) {
+        return Double.isNaN(number) || Double.isInfinite(number);
+    }
+
+    public static INDArray rank(final INDArray arr) {
         return rank(arr, true);
     }
 
-    public static INDArray rank(INDArray arr, boolean isAscending) {
+    public static INDArray rank(final INDArray arr, boolean isAscending) {
         return rank(arr, isAscending, "average", false);
     }
 
@@ -355,7 +393,7 @@ public class ArrayUtils {
      * @param method      average/first/min/max
      * @return 秩数组
      */
-    public static INDArray rank(INDArray array, boolean isAscending, String method, boolean isPct) {
+    public static INDArray rank(final INDArray array, boolean isAscending, String method, boolean isPct) {
         long[] shape = {array.rows(), array.columns()};
         INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
         INDArray row;

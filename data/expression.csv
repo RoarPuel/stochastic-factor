@@ -1,1 +1,3 @@
-mean(((turnover / vol) + high), day_num)
+DELTA(TURNOVER, 52)
+RANKPCT(STD(MAX(SHARE, CLOSE), 144))
+((((MEAN(VOL, 5) - MEAN(VOL, 10)) - MEAN(VOL, 20)) - MEAN(VOL, 60)) / VOL)

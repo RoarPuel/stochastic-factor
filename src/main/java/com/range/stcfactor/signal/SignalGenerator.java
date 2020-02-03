@@ -135,28 +135,6 @@ public class SignalGenerator {
         }
     }
 
-    private void filterUseful(List<DataScreen> screens,
-                              List<DataScreen> usefulScreens,
-                              List<DataScreen> uselessScreens) {
-        for (DataScreen screen : screens) {
-            if (!screen.isUseful()) {
-                uselessScreens.add(screen);
-                continue;
-            }
-
-            if (CollectionUtils.isEmpty(usefulScreens)) {
-                usefulScreens.add(screen);
-                continue;
-            }
-
-            if (filter.calMutualIC(screen, usefulScreens)) {
-                usefulScreens.add(screen);
-            } else {
-                uselessScreens.add(screen);
-            }
-        }
-    }
-
     private void monitor() {
         Thread monitor = new Thread(() -> {
             ThreadPoolExecutor pool = (ThreadPoolExecutor) threadPool;
@@ -186,6 +164,23 @@ public class SignalGenerator {
 
     private void close() {
         this.threadPool.shutdown();
+    }
+
+    private void filterUseful(List<DataScreen> screens,
+                              List<DataScreen> usefulScreens,
+                              List<DataScreen> uselessScreens) {
+        for (DataScreen screen : screens) {
+            if (!screen.isUseful()) {
+                uselessScreens.add(screen);
+                continue;
+            }
+
+            if (filter.calMutualIC(screen, usefulScreens)) {
+                usefulScreens.add(screen);
+            } else {
+                uselessScreens.add(screen);
+            }
+        }
     }
 
     private DataModel initData() {

@@ -20,6 +20,9 @@ public class DataScreen {
 
     private double totalEffectiveRate;
     private double dayEffectiveRate;
+    private double totalMean;
+    private double totalStd;
+    private double totalKurtosis;
     private double totalIC;
     private double groupIC;
     private double mutualIC;
@@ -116,6 +119,30 @@ public class DataScreen {
         this.dayEffectiveRate = dayEffectiveRate;
     }
 
+    public double getTotalMean() {
+        return totalMean;
+    }
+
+    public void setTotalMean(double totalMean) {
+        this.totalMean = totalMean;
+    }
+
+    public double getTotalStd() {
+        return totalStd;
+    }
+
+    public void setTotalStd(double totalStd) {
+        this.totalStd = totalStd;
+    }
+
+    public double getTotalKurtosis() {
+        return totalKurtosis;
+    }
+
+    public void setTotalKurtosis(double totalKurtosis) {
+        this.totalKurtosis = totalKurtosis;
+    }
+
     public double getTotalIC() {
         return totalIC;
     }
@@ -154,10 +181,14 @@ public class DataScreen {
                 + ", isUseful:" + useful
                 + ", totalEffectiveRate:" + totalEffectiveRate
                 + ", dayEffectiveRate:" + dayEffectiveRate
+                + ", totalMean:" + totalMean
+                + ", totalStd:" + totalStd
+                + ", totalKurtosis:" + totalKurtosis
                 + ", totalIC:" + totalIC
                 + ", groupIC:" + groupIC
                 + ", mutualIC:" + mutualIC
-                + ", dayTurnoverRate:" + dayTurnoverRate;
+                + ", dayTurnoverRate:" + dayTurnoverRate
+                + ".";
     }
 
 }

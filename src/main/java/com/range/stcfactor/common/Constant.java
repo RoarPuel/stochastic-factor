@@ -50,6 +50,23 @@ public class Constant {
     public static final String THRESHOLD_DAY_EFFECTIVE_RATE = "threshold.day.effective.rate";
     public static final String DEFAULT_THRESHOLD_DAY_EFFECTIVE_RATE = "0.5";
     /**
+     * 所有因子均值范围
+     */
+    public static final String THRESHOLD_TOTAL_MEAN_MIN = "threshold.total.mean.min";
+    public static final String DEFAULT_THRESHOLD_TOTAL_MEAN_MIN = "1E-9";
+    public static final String THRESHOLD_TOTAL_MEAN_MAX = "threshold.total.mean.max";
+    public static final String DEFAULT_THRESHOLD_TOTAL_MEAN_MAX = "1E9";
+    /**
+     * 所有因子标准差阈值
+     */
+    public static final String THRESHOLD_TOTAL_STD = "threshold.total.std";
+    public static final String DEFAULT_THRESHOLD_TOTAL_STD = "1E-9";
+    /**
+     * 所有因子峰度阈值
+     */
+    public static final String THRESHOLD_TOTAL_KURTOSIS = "threshold.total.kurtosis";
+    public static final String DEFAULT_THRESHOLD_TOTAL_KURTOSIS = "100";
+    /**
      * 所有因子的相关性阈值
      */
     public static final String THRESHOLD_TOTAL_INFORMATION_COEFFICIENT = "threshold.total.information.coefficient";

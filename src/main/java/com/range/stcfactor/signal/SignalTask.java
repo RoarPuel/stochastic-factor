@@ -28,6 +28,7 @@ public class SignalTask implements Callable<DataScreen> {
 
     private static final Logger logger = LogManager.getLogger(SignalTask.class);
 
+    private ExpFunctions functions;
     private ExpTree expression;
     private DataFactory factory;
     private SignalFilter filter;
@@ -35,6 +36,7 @@ public class SignalTask implements Callable<DataScreen> {
     private INDArray income;
 
     public SignalTask(ExpTree expression, DataFactory factory, SignalFilter filter) {
+        this.functions = new ExpFunctions(factory);
         this.expression = expression;
         this.factory = factory;
         this.filter = filter;
@@ -75,7 +77,7 @@ public class SignalTask implements Callable<DataScreen> {
                 dataList.toArray(datas);
 
                 Method method = ExpFunctions.class.getMethod(node.getData().getModelName(), paras);
-                result = method.invoke(null, datas);
+                result = method.invoke(functions, datas);
             } catch (Exception e) {
                 logger.error("Method execute error: {}", node, e);
             }

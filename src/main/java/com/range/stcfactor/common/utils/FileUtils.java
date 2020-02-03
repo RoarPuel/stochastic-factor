@@ -16,9 +16,6 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,9 +29,6 @@ import java.util.List;
 public class FileUtils {
 
     private static final Logger logger = LogManager.getLogger(FileUtils.class);
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    private static final DecimalFormat DOUBLE_DECIMAL_FORMAT = new DecimalFormat("#0.00");
 
     public static List<String[]> readCsv(String filepath, char separator, int skipLines) {
         List<String[]> lines = new ArrayList<>();
@@ -111,7 +105,7 @@ public class FileUtils {
         long start = System.currentTimeMillis();
         for (int i=0; i<lines.size(); i++) {
             String[] line = lines.get(i);
-            indexes.add(parseStrToDate(line[0]));
+            indexes.add(FormatUtils.parseStrToDate(line[0]));
 
             List<Double> items = new ArrayList<>();
             for (int j=1; j<line.length; j++) {
@@ -126,7 +120,7 @@ public class FileUtils {
 
             if (process && (System.currentTimeMillis() - start > 1000 || i == lines.size() - 1)) {
                 logger.info("........... loading ........... {}%",
-                        DOUBLE_DECIMAL_FORMAT.format((double) (i + 1) / lines.size() * 100));
+                        FormatUtils.parseDoubleToStr((double) (i + 1) / lines.size() * 100));
                 start = System.currentTimeMillis();
             }
         }
@@ -154,7 +148,7 @@ public class FileUtils {
             for (int i=0; i<data.rows(); i++) {
                 INDArray rowData = data.getRow(i);
                 String[] rowStr = new String[rowData.columns() + 1];
-                rowStr[0] = parseDateToStr(indexes.get(i));
+                rowStr[0] = FormatUtils.parseDateToStr(indexes.get(i));
                 for (int j=0; j<rowData.columns(); j++) {
                     double num = rowData.getDouble(j);
                     rowStr[j + 1] = Double.isNaN(num) ? "" : String.valueOf(num);
@@ -165,19 +159,6 @@ public class FileUtils {
         } catch (Exception e) {
             logger.error("Write csv to [{}] error.", filepath, e);
         }
-    }
-
-    private static Date parseStrToDate(String date) {
-        try {
-            return DATE_FORMAT.parse(date);
-        } catch (Exception e) {
-            logger.error("Parse date error.", e);
-            return null;
-        }
-    }
-
-    private static String parseDateToStr(Date date) {
-        return DATE_FORMAT.format(date);
     }
 
 }
