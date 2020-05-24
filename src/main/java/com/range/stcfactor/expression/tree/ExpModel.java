@@ -1,7 +1,10 @@
 package com.range.stcfactor.expression.tree;
 
+import com.range.stcfactor.common.Constant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.lang.reflect.Method;
 
 /**
  * 函数信息
@@ -13,42 +16,39 @@ public class ExpModel implements Cloneable {
 
     private static final Logger logger = LogManager.getLogger(ExpModel.class);
 
-    private String modelName;
-    private Class[] parametersType;
-    private Class returnType;
+    private boolean isFunction;
+    private boolean isArrays = false;
+    private boolean isEmpty = false;
+    private Object model;
 
-    public ExpModel() {
-
+    public ExpModel(Object model) {
+        this.isFunction = model instanceof Method;
+        if (model instanceof Method) {
+            Class[] parameterTypes = ((Method) model).getParameterTypes();
+            this.isArrays = parameterTypes.length == 1 && parameterTypes[0] == Constant.DEFAULT_TYPES;
+            this.isEmpty = parameterTypes.length == 0;
+        }
+        this.model = model;
     }
 
-    public ExpModel(String modelName, Class[] parametersType, Class returnType) {
-        this.modelName = modelName;
-        this.parametersType = parametersType;
-        this.returnType = returnType;
+    public boolean isFunction() {
+        return isFunction;
     }
 
-    public String getModelName() {
-        return modelName;
+    public boolean isArrays() {
+        return isArrays;
     }
 
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
+    public boolean isEmpty() {
+        return isEmpty;
     }
 
-    public Class[] getParametersType() {
-        return parametersType;
+    public Object getModel() {
+        return model;
     }
 
-    public void setParametersType(Class[] parametersType) {
-        this.parametersType = parametersType;
-    }
-
-    public Class getReturnType() {
-        return returnType;
-    }
-
-    public void setReturnType(Class returnType) {
-        this.returnType = returnType;
+    public void setModel(Object model) {
+        this.model = model;
     }
 
     @Override
@@ -65,16 +65,22 @@ public class ExpModel implements Cloneable {
             return false;
         }
         ExpModel expModel = (ExpModel) obj;
-        if (this.modelName.equals(expModel.getModelName())
-            && this.parametersType.length == expModel.parametersType.length) {
-            return true;
+        if (expModel.model instanceof Method) {
+            Method current = (Method) this.model;
+            Method compare = (Method) expModel.model;
+            return current.getName().equals(compare.getName())
+                    && current.getParameterTypes().length == compare.getParameterTypes().length;
+        } else {
+            return expModel.model.equals(this.model);
         }
-        return false;
     }
 
     @Override
     public String toString() {
-        return this.modelName;
+        if (this.model instanceof Method) {
+            return ((Method) this.model).getName();
+        }
+        return String.valueOf(this.model);
     }
 
     @Override

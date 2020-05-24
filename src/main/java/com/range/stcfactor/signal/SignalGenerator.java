@@ -2,14 +2,13 @@ package com.range.stcfactor.signal;
 
 import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.common.utils.FileUtils;
-import com.range.stcfactor.expression.ExpMode;
-import com.range.stcfactor.expression.ExpVariables;
+import com.range.stcfactor.expression.constant.ExpMode;
+import com.range.stcfactor.expression.constant.ExpVariables;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.data.DataBean;
-import com.range.stcfactor.signal.data.DataFactory;
 import com.range.stcfactor.signal.data.DataScreen;
 import com.range.stcfactor.signal.data.DataModel;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -40,7 +39,9 @@ public class SignalGenerator {
 
     private static final DecimalFormat DOUBLE_DECIMAL_FORMAT = new DecimalFormat("#0.00");
     private static final DecimalFormat INTEGER_DECIMAL_FORMAT = new DecimalFormat("00000000");
-    private static final String FACTOR_SUMMARY = "summary";
+    private static final String USEFUL = "useful";
+    private static final String USELESS = "useless";
+    private static final String FACTOR_SUMMARY = "summary.csv";
     private static final char FACTOR_SUMMARY_SEPARATOR = '\t';
     private static final String[] FACTOR_SUMMARY_HEADER = {
             "No.",
@@ -57,34 +58,28 @@ public class SignalGenerator {
     private int taskQueueMax;
     private String dataFilePath;
     private String factorFilePath;
+    private int threadParallel;
 
-    private ExecutorService threadPool;
-
-    private DataFactory factory;
+    private DataModel model;
     private SignalFilter filter;
+    private boolean isRecord = false;
 
     private List<String> headers;
     private List<Date> indexes;
-
-    private int totalTask = 0;
-    private boolean isRecord = false;
 
     public SignalGenerator(Properties config) {
         this.taskQueueMax = Integer.valueOf(config.getProperty(Constant.TASK_QUEUE_MAX, Constant.DEFAULT_TASK_QUEUE_MAX));
         this.dataFilePath = config.getProperty(Constant.DATA_FILE_PATH, Constant.DEFAULT_DATA_FILE_PATH);
         this.factorFilePath = config.getProperty(Constant.FACTOR_FILE_PATH, Constant.DEFAULT_FACTOR_FILE_PATH);
-
-        int threadParallel = Integer.valueOf(config.getProperty(Constant.THREAD_PARALLEL));
-        if (threadParallel <= 0) {
-            threadParallel = Integer.valueOf(Constant.DEFAULT_THREAD_PARALLEL);
+        this.threadParallel = Integer.valueOf(config.getProperty(Constant.THREAD_PARALLEL));
+        if (this.threadParallel <= 0) {
+            this.threadParallel = Integer.valueOf(Constant.DEFAULT_THREAD_PARALLEL);
         }
-        this.threadPool = Executors.newFixedThreadPool(threadParallel);
 
-        this.factory = new DataFactory(initData());
+        this.model = initData();
         this.filter = new SignalFilter(readFactor(), config);
-
         if (ExpMode.valueOf(config.getProperty(Constant.EXP_MODE, Constant.DEFAULT_EXP_MODE)) == ExpMode.auto) {
-            isRecord = true;
+            this.isRecord = true;
         }
     }
 
@@ -97,24 +92,27 @@ public class SignalGenerator {
     }
 
     private void startTasks(Set<ExpTree> exps, boolean isWrite) {
-        totalTask = exps.size();
-        monitor();
+        // 启动 & 监控
+        ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadParallel);
+        SignalMonitor monitor = new SignalMonitor(exps.size(), threadPool);
+        new Thread(monitor).start();
 
+        // 计算
         List<Future<DataScreen>> results = new ArrayList<>();
-        ThreadPoolExecutor pool = (ThreadPoolExecutor) threadPool;
         for (ExpTree expTree : exps) {
-            while (pool.getQueue().size() >= taskQueueMax) {
+            while (threadPool.getQueue().size() >= taskQueueMax) {
                 try {
-                    Thread.sleep(10 * 1000);
+                    Thread.sleep(5 * 1000);
                 } catch (InterruptedException e) {
                     logger.error("Submit thread sleep error.", e);
                 }
             }
 
-            Future<DataScreen> future = threadPool.submit(new SignalTask(expTree, factory, filter));
+            Future<DataScreen> future = threadPool.submit(new SignalTask(expTree, model, filter));
             results.add(future);
         }
 
+        // 过滤
         List<DataScreen> screens = new ArrayList<>();
         for (Future<DataScreen> result : results) {
             try {
@@ -123,8 +121,12 @@ public class SignalGenerator {
                 e.printStackTrace();
             }
         }
-        close();
 
+        // 关闭
+        threadPool.shutdown();
+        monitor.close();
+
+        // 记录
         if (isWrite) {
             List<DataScreen> usefulScreens = new ArrayList<>();
             List<DataScreen> uselessScreens = new ArrayList<>();
@@ -133,37 +135,6 @@ public class SignalGenerator {
         } else {
             screens.forEach(screen -> logger.info("Expression filter result: {}.", screen));
         }
-    }
-
-    private void monitor() {
-        Thread monitor = new Thread(() -> {
-            ThreadPoolExecutor pool = (ThreadPoolExecutor) threadPool;
-
-            while (!pool.isShutdown()) {
-                double progress = pool.getCompletedTaskCount() / (double) totalTask * 100;
-                if (Double.isNaN(progress)) {
-                    progress = 0.0;
-                }
-                logger.info("******************* Progress: {}% => (Total:{}, Submit:{}, Finish:{}, Active:{}, Queue:{}) *******************",
-                        DOUBLE_DECIMAL_FORMAT.format(progress),
-                        totalTask,
-                        pool.getTaskCount(),
-                        pool.getCompletedTaskCount(),
-                        pool.getActiveCount(),
-                        pool.getQueue().size());
-
-                try {
-                    Thread.sleep(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        monitor.start();
-    }
-
-    private void close() {
-        this.threadPool.shutdown();
     }
 
     private void filterUseful(List<DataScreen> screens,
@@ -186,9 +157,6 @@ public class SignalGenerator {
     private DataModel initData() {
         DataModel dataModel = new DataModel();
         for (ExpVariables var : ExpVariables.values()) {
-            if (ExpVariables.DAY_NUM == var) {
-                continue;
-            }
             DataBean bean = readData(var);
             dataModel.putData(var, bean.getData());
             if (headers == null || indexes == null) {
@@ -200,7 +168,7 @@ public class SignalGenerator {
     }
 
     private DataBean readData(ExpVariables type) {
-        String filepath = MessageFormat.format(this.dataFilePath, type.name().toLowerCase());
+        String filepath = StringUtils.joinWith("/", this.dataFilePath, type.name().toLowerCase() + ".csv");
         logger.info(">>>>> Start load [{}] data from [{}].", type.name(), filepath);
         List<String> headers = new ArrayList<>();
         List<Date> indexes = new ArrayList<>();
@@ -216,14 +184,14 @@ public class SignalGenerator {
     }
 
     private List<DataScreen> readFactor() {
-        String summaryFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY);
+        String summaryFilepath = StringUtils.joinWith("/", this.factorFilePath, USEFUL, FACTOR_SUMMARY);
         logger.info(">>>>> Start load [factor history data from [{}].", summaryFilepath);
         List<String[]> indicators = FileUtils.readCsv(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, 1);
         List<DataScreen> screens = new ArrayList<>();
         long start = System.currentTimeMillis();
         int index = 0;
         for (String[] indicator : indicators) {
-            INDArray factor = FileUtils.readData(MessageFormat.format(this.factorFilePath, indicator[0]), false);
+            INDArray factor = FileUtils.readData(StringUtils.joinWith("/", this.factorFilePath, USEFUL, indicator[0] + ".csv"), false);
             DataScreen screen = new DataScreen(indicator[1], factor);
             screen.setTotalEffectiveRate(Double.valueOf(indicator[3]));
             screen.setDayEffectiveRate(Double.valueOf(indicator[4]));
@@ -247,7 +215,7 @@ public class SignalGenerator {
     private void writeFactor(List<DataScreen> usefulScreens, List<DataScreen> uselessScreens) {
         logger.info(">>>>> Start write factors.");
         // 初始化因子保存文件
-        String summaryFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY);
+        String summaryFilepath = StringUtils.joinWith("/", this.factorFilePath, USEFUL, FACTOR_SUMMARY);
         File usefulFile = new File(summaryFilepath);
         if (usefulFile.getParentFile() != null && !usefulFile.getParentFile().exists()) {
             usefulFile.getParentFile().mkdirs();
@@ -270,7 +238,7 @@ public class SignalGenerator {
             String[] indicator = getIndicator(screen, lastNo++);
             FileUtils.writeCsvAppend(summaryFilepath, FACTOR_SUMMARY_SEPARATOR, indicator);
             // Write factor
-            String filepath = MessageFormat.format(this.factorFilePath, indicator[0]);
+            String filepath = StringUtils.joinWith("/", this.factorFilePath, USEFUL, indicator[0] + ".csv");
             List<Date> newIndexes = new ArrayList<>(indexes);
             List<String> newHeaders = new ArrayList<>(headers);
             newHeaders.add(0, "");
@@ -285,7 +253,7 @@ public class SignalGenerator {
         }
 
         // 保存无效因子信息
-        String uselessFilepath = MessageFormat.format(this.factorFilePath, FACTOR_SUMMARY + "-useless");
+        String uselessFilepath = StringUtils.joinWith("/", this.factorFilePath, USELESS, System.currentTimeMillis() + ".csv");
         List<String[]> uselessIndicators = new ArrayList<>();
         uselessIndicators.add(FACTOR_SUMMARY_HEADER);
         lastNo = 1;

@@ -3,6 +3,7 @@ package expression;
 import com.range.stcfactor.common.Constant;
 import com.range.stcfactor.expression.ExpResolver;
 import com.range.stcfactor.signal.SignalGenerator;
+import org.junit.Test;
 
 import java.util.Properties;
 
@@ -12,7 +13,8 @@ import java.util.Properties;
  */
 public class SignalTest {
 
-    public static void main(String[] args) {
+    @Test
+    public void test() {
         SignalGenerator signalGenerator = new SignalGenerator(obtainConfig());
         signalGenerator.startTask(ExpResolver.analysis("wma(close,65)"));
     }
@@ -23,6 +25,7 @@ public class SignalTest {
         config.setProperty(Constant.TASK_QUEUE_MAX, Constant.DEFAULT_TASK_QUEUE_MAX);
         config.setProperty(Constant.EXP_MODE, Constant.DEFAULT_EXP_MODE);
         config.setProperty(Constant.EXP_TOTAL, Constant.DEFAULT_EXP_TOTAL);
+        config.setProperty(Constant.EXP_SPLIT, Constant.DEFAULT_EXP_SPLIT);
         config.setProperty(Constant.EXP_DEPTH_MIN, Constant.DEFAULT_EXP_DEPTH_MIN);
         config.setProperty(Constant.EXP_DEPTH_MAX, Constant.DEFAULT_EXP_DEPTH_MAX);
         config.setProperty(Constant.DATA_FILE_PATH, Constant.DEFAULT_DATA_FILE_PATH);

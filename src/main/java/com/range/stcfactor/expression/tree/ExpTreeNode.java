@@ -15,6 +15,13 @@ public class ExpTreeNode<T> {
     private T data;
     private List<ExpTreeNode<T>> childNodes;
 
+    public ExpTreeNode() {
+    }
+
+    public ExpTreeNode(T data) {
+        this.data = data;
+    }
+
     public T getData() {
         return data;
     }
@@ -32,6 +39,18 @@ public class ExpTreeNode<T> {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj.getClass() != this.getClass()) {
+            return false;
+        }
+        ExpTreeNode node = (ExpTreeNode) obj;
+        return this.toString().equalsIgnoreCase(node.toString());
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(data);
@@ -39,8 +58,8 @@ public class ExpTreeNode<T> {
             return sb.toString();
         }
         sb.append("(");
-        childNodes.forEach(node -> sb.append(node.getData()));
-        sb.append(")");
-        return sb.toString();
+        childNodes.forEach(node -> sb.append(node.toString()).append(","));
+        return sb.substring(0, sb.length()-1) + ")";
     }
+
 }

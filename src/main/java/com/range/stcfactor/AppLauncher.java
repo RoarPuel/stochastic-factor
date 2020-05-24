@@ -10,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -34,6 +36,7 @@ public class AppLauncher {
         logger.info("     {} = {}", Constant.TASK_QUEUE_MAX, config.getProperty(Constant.TASK_QUEUE_MAX));
         logger.info("     {} = {}", Constant.EXP_MODE, config.getProperty(Constant.EXP_MODE));
         logger.info("     {} = {}", Constant.EXP_TOTAL, config.getProperty(Constant.EXP_TOTAL));
+        logger.info("     {} = {}", Constant.EXP_SPLIT, config.getProperty(Constant.EXP_SPLIT));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MIN, config.getProperty(Constant.EXP_DEPTH_MIN));
         logger.info("     {} = {}", Constant.EXP_DEPTH_MAX, config.getProperty(Constant.EXP_DEPTH_MAX));
         logger.info("     {} = {}", Constant.EXP_PRINT_FORMAT, config.getProperty(Constant.EXP_PRINT_FORMAT));
@@ -48,15 +51,23 @@ public class AppLauncher {
         logger.info("     {} = {}", Constant.THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT, config.getProperty(Constant.THRESHOLD_MUTUAL_INFORMATION_COEFFICIENT));
         logger.info("     {} = {}", Constant.THRESHOLD_DAY_TURNOVER_RATE, config.getProperty(Constant.THRESHOLD_DAY_TURNOVER_RATE));
 
-        logger.info("=== Start generate expressions.");
         ExpGenerator expGenerator = new ExpGenerator(config);
-        Set<ExpTree> exps = expGenerator.obtainExpression();
-        logger.info("=== Finish generate expressions. Actual count:{}.", exps.size());
-
-        logger.info("=== Start signal task.");
         SignalGenerator signalGenerator = new SignalGenerator(config);
-        signalGenerator.startTasks(exps);
-        logger.info("=== Finish signal task.");
+
+        int index = 0;
+        List<Integer> parts = getParts(Integer.valueOf(config.getProperty(Constant.EXP_TOTAL)),
+                                        Integer.valueOf(config.getProperty(Constant.EXP_SPLIT)));
+        for (int part : parts) {
+            logger.info("=================================== Run {} time. ===================================", ++index);
+
+            logger.info("=== Start generate expressions.");
+            Set<ExpTree> exps = expGenerator.obtainExpression(part);
+            logger.info("=== Finish generate expressions. Actual count:{}.", exps.size());
+
+            logger.info("=== Start signal task.");
+            signalGenerator.startTasks(exps);
+            logger.info("=== Finish signal task.");
+        }
     }
 
     private static Properties initConfig(String configPath) {
@@ -68,6 +79,17 @@ public class AppLauncher {
             logger.error("load properties error: {}", e.getMessage());
         }
         return config;
+    }
+
+    private static List<Integer> getParts(int total, int split) {
+        List<Integer> partitions = new ArrayList<>();
+        for (int i=0; i<total/split; i++) {
+            partitions.add(split);
+        }
+        if (total % split > 0) {
+            partitions.add(total % split);
+        }
+        return partitions;
     }
 
 }

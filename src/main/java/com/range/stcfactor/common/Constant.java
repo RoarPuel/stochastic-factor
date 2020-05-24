@@ -12,16 +12,19 @@ public class Constant {
 
     public static final String DEFAULT_CONFIG_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\data\\config.properties";
     public static final Class DEFAULT_TYPE = INDArray.class;
+    public static final Class DEFAULT_TYPES = INDArray[].class;
 
     public static final String THREAD_PARALLEL = "thread.parallel";
     public static final String DEFAULT_THREAD_PARALLEL = String.valueOf(Runtime.getRuntime().availableProcessors());
     public static final String TASK_QUEUE_MAX = "task.queue.max";
-    public static final String DEFAULT_TASK_QUEUE_MAX = "100";
+    public static final String DEFAULT_TASK_QUEUE_MAX = "10";
 
     public static final String EXP_MODE = "exp.mode";
     public static final String DEFAULT_EXP_MODE = "auto";
     public static final String EXP_TOTAL = "exp.total";
     public static final String DEFAULT_EXP_TOTAL = "1";
+    public static final String EXP_SPLIT = "exp.split";
+    public static final String DEFAULT_EXP_SPLIT = "100";
     public static final String EXP_DEPTH_MIN = "exp.depth.min";
     public static final String DEFAULT_EXP_DEPTH_MIN = "3";
     public static final String EXP_DEPTH_MAX = "exp.depth.max";
@@ -30,9 +33,9 @@ public class Constant {
     public static final String DEFAULT_EXP_PRINT_FORMAT = "default";
 
     public static final String DATA_FILE_PATH = "data.file.path";
-    public static final String DEFAULT_DATA_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\data\\{0}.csv";
+    public static final String DEFAULT_DATA_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\data";
     public static final String FACTOR_FILE_PATH = "factor.file.path";
-    public static final String DEFAULT_FACTOR_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\factor\\{0}.csv";
+    public static final String DEFAULT_FACTOR_FILE_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\factor";
 
     public static final String FILTER_GROUP_SETTING = "filter.group.setting";
     public static final String DEFAULT_FILTER_GROUP_SETTING = "20";

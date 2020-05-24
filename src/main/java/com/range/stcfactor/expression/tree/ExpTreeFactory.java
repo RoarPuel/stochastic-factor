@@ -1,13 +1,16 @@
 package com.range.stcfactor.expression.tree;
 
-import com.range.stcfactor.common.utils.RandomUtils;
-import com.range.stcfactor.expression.ExpPrintFormat;
+import com.range.stcfactor.common.Constant;
+import com.range.stcfactor.common.utils.RandomsUtils;
+import com.range.stcfactor.expression.constant.ExpPrintFormat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * 生成树
@@ -25,17 +28,20 @@ public class ExpTreeFactory {
     private Map<Class, List<ExpModel>> models;
     private Map<Class, List<ExpModel>> functions;
     private Map<Class, List<ExpModel>> variables;
+    private Map<String, Function<Integer, ExpModel>> constants;
     private Map<ExpModel, Double> weights;
     private ExpPrintFormat format;
 
     public ExpTreeFactory(Map<Class, List<ExpModel>> models,
                           Map<Class, List<ExpModel>> functions,
                           Map<Class, List<ExpModel>> variables,
+                          Map<String, Function<Integer, ExpModel>> constants,
                           Map<ExpModel, Double> weights,
                           ExpPrintFormat format) {
         this.models = models;
         this.functions = functions;
         this.variables = variables;
+        this.constants = constants;
         this.weights = weights;
         this.format = format;
     }
@@ -78,7 +84,7 @@ public class ExpTreeFactory {
             depthMax = MAX_EXCLUSIVE;
         }
         logger.debug("Build tree {}<=depth<={}, root: {}.", depthMin, depthMax, root);
-        return build(RandomUtils.getRandomNum(depthMin, depthMax + 1), root, rootType);
+        return build(RandomsUtils.getRandomInt(depthMin, depthMax + 1), root, rootType);
     }
 
     /**
@@ -87,8 +93,7 @@ public class ExpTreeFactory {
     private ExpTree build(int depth, ExpTreeNode<ExpModel> root, Class rootType) {
         ExpTree expTree = new ExpTree(depth, format);
         if (root == null) {
-            root = new ExpTreeNode<>();
-            root.setData(getRandomInfo(functions.get(rootType)));
+            root = newNode(rootType, functions, null, 0);
         }
         addChild(root, depth - 1);
         expTree.setRoot(root);
@@ -101,29 +106,65 @@ public class ExpTreeFactory {
      * @param layer 树的层数
      */
     private void addChild(ExpTreeNode<ExpModel> parent, int layer) {
-        List<ExpTreeNode<ExpModel>> nodes = new ArrayList<>();
-        if (parent.getData().getParametersType() != null) {
-            if (layer <= 0) {
-                for (Class type : parent.getData().getParametersType()) {
-                    ExpTreeNode<ExpModel> node = new ExpTreeNode<>();
-                    node.setData(getRandomInfo(variables.get(type)));
-                    node.setChildNodes(new ArrayList<>());
-                    nodes.add(node);
+        ExpModel parentModel = parent.getData();
+        if (parentModel.isFunction()) {
+            List<ExpTreeNode<ExpModel>> nodes = new ArrayList<>();
+            Method method = (Method) parentModel.getModel();
+            String parentName = method.getName();
+            Class[] parameterTypes = method.getParameterTypes();
+            if (layer > 0) {
+                if (parentModel.isArrays()) {
+                    ExpModel em = constants.get(parentName).apply(0);
+                    for (int index=0; index<(Integer) em.getModel(); index++) {
+                        ExpTreeNode<ExpModel> node = newNode(Constant.DEFAULT_TYPE, models, parentName, index);
+                        addChild(node, layer - 1);
+                        nodes.add(node);
+                    }
+                } else {
+                    for (int index=0; index<parameterTypes.length; index++) {
+                        ExpTreeNode<ExpModel> node = newNode(parameterTypes[index], models, parentName, index);
+                        addChild(node, layer - 1);
+                        nodes.add(node);
+                    }
                 }
             } else {
-                for (Class type : parent.getData().getParametersType()) {
-                    ExpTreeNode<ExpModel> node = new ExpTreeNode<>();
-                    node.setData(getRandomInfo(models.get(type)));
-                    addChild(node, layer - 1);
-                    nodes.add(node);
+                if (parentModel.isArrays()) {
+                    ExpModel em = constants.get(parentName).apply(0);
+                    for (int index=0; index<(Integer) em.getModel(); index++) {
+                        ExpTreeNode<ExpModel> node = newNode(Constant.DEFAULT_TYPE, variables, parentName, index);
+                        node.setChildNodes(new ArrayList<>());
+                        nodes.add(node);
+                    }
+                } else {
+                    for (int index=0; index<parameterTypes.length; index++) {
+                        ExpTreeNode<ExpModel> node = newNode(parameterTypes[index], variables, parentName, index);
+                        node.setChildNodes(new ArrayList<>());
+                        nodes.add(node);
+                    }
+                }
+            }
+            parent.setChildNodes(nodes);
+        } else {
+            parent.setChildNodes(new ArrayList<>());
+        }
+    }
+
+    private ExpTreeNode<ExpModel> newNode(Class type, Map<Class, List<ExpModel>> infos, String parentName, Integer index) {
+        ExpModel model = null;
+        if (type == Constant.DEFAULT_TYPE) {
+            model = (ExpModel) RandomsUtils.getRandomInfo(infos.get(type)).clone();
+        } else {
+            if (constants.containsKey(parentName)) {
+                model = constants.get(parentName).apply(index);
+            } else {
+                if (type == Integer.class) {
+                    model = new ExpModel(RandomsUtils.getRandomInt(2, 243));
+                } else {
+                    logger.error("[{}]({} : {}) type has not default value.", parentName, index+1, type.getSimpleName());
                 }
             }
         }
-        parent.setChildNodes(nodes);
-    }
-
-    private ExpModel getRandomInfo(List<ExpModel> infos) {
-        return (ExpModel) RandomUtils.getRandomInfo(infos).clone();
+        return new ExpTreeNode<>(model);
     }
 
 }

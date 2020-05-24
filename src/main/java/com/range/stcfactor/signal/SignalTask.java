@@ -2,13 +2,12 @@ package com.range.stcfactor.signal;
 
 import com.range.stcfactor.common.utils.ArrayUtils;
 import com.range.stcfactor.expression.ExpFunctions;
-import com.range.stcfactor.expression.ExpVariables;
+import com.range.stcfactor.expression.constant.ExpVariables;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeNode;
 import com.range.stcfactor.expression.tree.ExpModel;
-import com.range.stcfactor.signal.data.DataFactory;
+import com.range.stcfactor.signal.data.DataModel;
 import com.range.stcfactor.signal.data.DataScreen;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -30,73 +29,78 @@ public class SignalTask implements Callable<DataScreen> {
 
     private ExpFunctions functions;
     private ExpTree expression;
-    private DataFactory factory;
+    private DataModel model;
     private SignalFilter filter;
 
     private INDArray income;
 
-    public SignalTask(ExpTree expression, DataFactory factory, SignalFilter filter) {
-        this.functions = new ExpFunctions(factory);
+    public SignalTask(ExpTree expression, DataModel model, SignalFilter filter) {
+        this.functions = new ExpFunctions(model);
         this.expression = expression;
-        this.factory = factory;
+        this.model = model;
         this.filter = filter;
 
-        INDArray close = (INDArray) factory.obtainData(ExpVariables.CLOSE);
+        INDArray close = (INDArray) model.getData(ExpVariables.CLOSE);
         this.income = ArrayUtils.shift(close, -1).div(close).sub(1.0);
     }
 
     @Override
     public DataScreen call() {
-        logger.info("-------- Start expression : [{}].", expression);
+        logger.debug("-------- Start expression : [{}].", expression);
 
         long startTime = System.currentTimeMillis();
         INDArray factor = (INDArray) calculate(expression.getRoot());
-        logger.info("======== Finish calculate [{}] factors cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
+        logger.debug("======== Finish calculate [{}] factors cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
 
         startTime = System.currentTimeMillis();
         DataScreen screen = filter.screen(expression, factor, income);
-        logger.info("======== Finish filter [{}] indexes cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
+        logger.debug("======== Finish filter [{}] indexes cost {}s.", expression, (System.currentTimeMillis() - startTime) / 1000);
 
         return screen;
     }
 
     private Object calculate(ExpTreeNode<ExpModel> node) {
-        if (CollectionUtils.isNotEmpty(node.getChildNodes())) {
-            Object result = null;
-            try {
-                List<Class> paraList = new ArrayList<>();
-                List<Object> dataList = new ArrayList<>();
-                for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {
-                    paraList.add(n.getData().getReturnType());
-                    dataList.add(calculate(n));
+        ExpModel expModel = node.getData();
+        Object result = null;
+        if (expModel.isFunction()) {
+            if (expModel.isArrays()) {
+                try {
+                    List<INDArray> dataList = new ArrayList<>();
+                    for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {
+                        dataList.add((INDArray) calculate(n));
+                    }
+                    result = ((Method) expModel.getModel()).invoke(functions, (Object) dataList.toArray(new INDArray[0]));
+                } catch (Exception e) {
+                    logger.error("Method execute error: {}", node, e);
                 }
 
-                Class[] paras = new Class[paraList.size()];
-                paraList.toArray(paras);
-                Object[] datas = new Object[dataList.size()];
-                dataList.toArray(datas);
+            } else if (expModel.isEmpty()) {
+                try {
+                    result = ((Method) expModel.getModel()).invoke(functions);
+                } catch (Exception e) {
+                    logger.error("Method execute error: {}", node, e);
+                }
 
-                Method method = ExpFunctions.class.getMethod(node.getData().getModelName(), paras);
-                result = method.invoke(functions, datas);
-            } catch (Exception e) {
-                logger.error("Method execute error: {}", node, e);
+            } else {
+                try {
+                    List<Object> dataList = new ArrayList<>();
+                    for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {
+                        dataList.add(calculate(n));
+                    }
+                    result = ((Method) expModel.getModel()).invoke(functions, dataList.toArray(new Object[0]));
+                } catch (Exception e) {
+                    logger.error("Method execute error: {}", node, e);
+                }
+
             }
-            return result;
         } else {
-            Object data;
-            String variableName = node.getData().getModelName();
-            try {
-                ExpVariables variable = ExpVariables.valueOf(variableName.toUpperCase());
-                data = factory.obtainData(variable);
-                if (ExpVariables.DAY_NUM == variable) {
-                    node.getData().setModelName(String.valueOf(data));
-                }
-            } catch (Exception e) {
-                logger.debug("Error variable: {}.", variableName, e);
-                data = Integer.valueOf(variableName);
+            result = expModel.getModel();
+            if (result instanceof ExpVariables) {
+                result = model.getData((ExpVariables) result);
             }
-            return data;
         }
+
+        return result;
     }
 
 }

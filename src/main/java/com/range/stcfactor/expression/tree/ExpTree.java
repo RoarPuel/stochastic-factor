@@ -1,11 +1,13 @@
 package com.range.stcfactor.expression.tree;
 
-import com.range.stcfactor.expression.ExpFunctionSymbol;
-import com.range.stcfactor.expression.ExpPrintFormat;
+import com.range.stcfactor.expression.constant.ExpFunctionSymbol;
+import com.range.stcfactor.expression.constant.ExpPrintFormat;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.lang.reflect.Method;
 
 /**
  * 树
@@ -50,7 +52,7 @@ public class ExpTree {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return this.toString().hashCode();
     }
 
     @Override
@@ -62,10 +64,7 @@ public class ExpTree {
             return false;
         }
         ExpTree expTree = (ExpTree) obj;
-        if (depth != expTree.getDepth()) {
-            return false;
-        }
-        return this.root.equals(expTree.getRoot());
+        return this.toString().equalsIgnoreCase(expTree.toString());
     }
 
     @Override
@@ -95,16 +94,21 @@ public class ExpTree {
      */
     private void obtainExpression(ExpTreeNode<ExpModel> node, StringBuilder sb) {
         String symbol = "";
+        ExpModel model = node.getData();
         try {
-            symbol = ExpFunctionSymbol.valueOf(node.getData().getModelName().toUpperCase()).getSymbol();
+            symbol = ExpFunctionSymbol.valueOf(((Method) model.getModel()).getName().toUpperCase()).getSymbol();
         } catch (Exception e) {
-            logger.debug("Not found function symbol");
+            logger.debug("Not found function symbol", e);
         }
 
         if (StringUtils.isEmpty(symbol)) {
-            sb.append(node.getData().getModelName());
+            if (model.isFunction()) {
+                sb.append(((Method) model.getModel()).getName());
+            } else {
+                sb.append(model.getModel());
+            }
         }
-        if (CollectionUtils.isNotEmpty(node.getChildNodes())) {
+        if (model.isFunction()) {
             sb.append("(");
             int index = 0;
             for (ExpTreeNode<ExpModel> n : node.getChildNodes()) {

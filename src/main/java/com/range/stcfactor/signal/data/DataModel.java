@@ -1,6 +1,6 @@
 package com.range.stcfactor.signal.data;
 
-import com.range.stcfactor.expression.ExpVariables;
+import com.range.stcfactor.expression.constant.ExpVariables;
 
 import java.util.HashMap;
 import java.util.Map;

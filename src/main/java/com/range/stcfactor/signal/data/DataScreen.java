@@ -187,8 +187,7 @@ public class DataScreen {
                 + ", totalIC:" + totalIC
                 + ", groupIC:" + groupIC
                 + ", mutualIC:" + mutualIC
-                + ", dayTurnoverRate:" + dayTurnoverRate
-                + ".";
+                + ", dayTurnoverRate:" + dayTurnoverRate;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.range.stcfactor.expression;
+package com.range.stcfactor.expression.constant;
 
 import com.range.stcfactor.common.Constant;
 
@@ -43,19 +43,10 @@ public enum ExpVariables {
     /**
      * turnover
      */
-    TURNOVER,
-
-    /**
-     * day_num
-     */
-    DAY_NUM;
+    TURNOVER;
 
     public Class getType() {
-        if (this == DAY_NUM) {
-            return Integer.class;
-        } else {
-            return Constant.DEFAULT_TYPE;
-        }
+        return Constant.DEFAULT_TYPE;
     }
 
 }

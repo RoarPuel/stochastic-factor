@@ -1,13 +1,6 @@
 package com.range.stcfactor.common.utils;
 
-import com.range.stcfactor.common.helper.RangeTransform;
 import com.range.stcfactor.common.helper.RankAssist;
-import com.range.stcfactor.common.helper.Rolling2Array;
-import com.range.stcfactor.common.helper.Rolling2Double;
-import com.range.stcfactor.common.helper.RollingArray;
-import com.range.stcfactor.common.helper.RollingDouble;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.reduce.longer.MatchCondition;
@@ -20,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,9 +24,7 @@ import java.util.stream.IntStream;
  */
 public class ArrayUtils {
 
-    private static final Logger logger = LogManager.getLogger(ArrayUtils.class);
-
-    public static INDArray rolling(final INDArray array, Integer window, RollingArray transform) {
+    public static INDArray rollingRow(final INDArray array, final Integer window, Function<INDArray, INDArray> transform) {
         long[] shape = {array.rows(), array.columns()};
         INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
         for (int current=0; current < array.rows(); current++) {
@@ -48,29 +41,13 @@ public class ArrayUtils {
         return result;
     }
 
-    public static INDArray rolling(final INDArray array, Integer window, Rolling2Array transform) {
-        long[] shape = {array.rows(), array.columns()};
-        INDArray result = Nd4j.valueArrayOf(shape, Double.NaN, DataType.DOUBLE);
-        for (int current=0; current < array.rows(); current++) {
-            if (current - window < 0) {
-                continue;
-            }
-
-            INDArray temp1 = array.getRow(current);
-            INDArray temp2 = array.getRow(current - window);
-
-            result.putRow(current, transform.apply(temp1, temp2));
-        }
-        return result;
-    }
-
-    public static INDArray rolling(final INDArray array, Integer window, RollingDouble transform) {
+    public static INDArray rolling(final INDArray array, final Integer window, Function<double[], Double> transform) {
         int rows = array.rows();
         int columns = array.columns();
         double[][] result = new double[rows][columns];
 
         double[][] matrix = array.toDoubleMatrix();
-        for (int row=0; row < matrix.length; row++) {
+        for (int row=0; row < rows; row++) {
             if (row + 1 < window) {
                 for (int i=0; i<columns; i++) {
                     result[row][i] = Double.NaN;
@@ -78,12 +55,12 @@ public class ArrayUtils {
                 continue;
             }
 
-            for (int column=0; column<columns; column++) {
+            for (int col=0; col<columns; col++) {
                 boolean hasNan = false;
                 int last = row + 1 - window;
                 double[] columnTemp = new double[window];
-                for (int j=0; j<columnTemp.length; j++,last++) {
-                    double num = matrix[last][column];
+                for (int j=0; j<window; j++,last++) {
+                    double num = matrix[last][col];
                     if (Double.isNaN(num)) {
                         hasNan = true;
                         break;
@@ -91,23 +68,23 @@ public class ArrayUtils {
                     columnTemp[j] = num;
                 }
                 if (hasNan) {
-                    result[row][column] = Double.NaN;
+                    result[row][col] = Double.NaN;
                 } else {
-                    result[row][column] = transform.apply(columnTemp);
+                    result[row][col] = transform.apply(columnTemp);
                 }
             }
         }
         return Nd4j.create(result);
     }
 
-    public static INDArray rolling(final INDArray array1, final INDArray array2, Integer window, Rolling2Double transform) {
+    public static INDArray rolling(final INDArray array1, final INDArray array2, final Integer window, BiFunction<double[], double[], Double> transform) {
         int rows = array1.rows();
         int columns = array1.columns();
         double[][] result = new double[rows][columns];
 
         double[][] matrix1 = array1.toDoubleMatrix();
         double[][] matrix2 = array2.toDoubleMatrix();
-        for (int row=0; row < matrix1.length; row++) {
+        for (int row=0; row < rows; row++) {
             if (row + 1 < window) {
                 for (int i=0; i<columns; i++) {
                     result[row][i] = Double.NaN;
@@ -115,18 +92,92 @@ public class ArrayUtils {
                 continue;
             }
 
-            for (int column=0; column<columns; column++) {
+            for (int col=0; col<columns; col++) {
                 double[] column1 = new double[window];
                 double[] column2 = new double[window];
                 int last = row + 1 - window;
-                for (int j=0; j<column1.length; j++,last++) {
-                    column1[j] = matrix1[last][column];
-                    column2[j] = matrix2[last][column];
+                for (int j=0; j<window; j++,last++) {
+                    column1[j] = matrix1[last][col];
+                    column2[j] = matrix2[last][col];
                 }
-                result[row][column] = transform.apply(column1, column2);
+                result[row][col] = transform.apply(column1, column2);
             }
         }
         return Nd4j.create(result);
+    }
+
+    public static INDArray compare(final INDArray array, final Function<double[], Boolean> condition, final Object truth, final Object fault) {
+        return compare(condition(array, condition), truth, fault);
+    }
+
+    public static INDArray compare(final INDArray[] arrays, final Function<double[], Boolean> condition, final Object truth, final Object fault) {
+        return compare(condition(arrays, condition), truth, fault);
+    }
+
+    public static INDArray compare(final INDArray condition, final Object truth, final Object fault) {
+        int rows = condition.rows();
+        int cols = condition.columns();
+        double[][] result = new double[rows][cols];
+
+        double[][] conditionArray = condition.toDoubleMatrix();
+        double[][] truthArray = createArray(truth, rows, cols);
+        double[][] faultArray = createArray(fault, rows, cols);
+        for (int row=0; row<rows; row++) {
+            double[] cRowData = conditionArray[row];
+            double[] tRowData = truthArray[row];
+            double[] fRowData = faultArray[row];
+            for (int col=0; col<cols; col++) {
+                result[row][col] = cRowData[col] >= 0 ? tRowData[col] : fRowData[col];
+            }
+        }
+
+        return Nd4j.create(result);
+    }
+
+    public static INDArray condition(final INDArray array, final Function<double[], Boolean> condition) {
+        INDArray[] arrays = {array};
+        return condition(arrays, condition);
+    }
+
+    public static INDArray condition(final INDArray[] arrays, final Function<double[], Boolean> condition) {
+        int rows = arrays[0].rows();
+        int columns = arrays[0].columns();
+        double[][] result = new double[rows][columns];
+
+        int length = arrays.length;
+        double[][][] matrixArrays = new double[length][][];
+        for (int i=0; i<length; i++) {
+            matrixArrays[i] = arrays[i].toDoubleMatrix();
+        }
+        for (int row=0; row<rows; row++) {
+            double[][] mas = new double[length][];
+            for (int i=0; i<length; i++) {
+                mas[i] = matrixArrays[i][row];
+            }
+            for (int col=0; col<columns; col++) {
+                double[] source = new double[length];
+                for (int i=0; i<length; i++) {
+                    source[i] = mas[i][col];
+                }
+                result[row][col] = condition.apply(source) ? 1.0 : -1.0;
+            }
+        }
+        return Nd4j.create(result);
+    }
+
+    private static double[][] createArray(Object obj, int rows, int cols) {
+        double[][] array;
+        if (obj instanceof INDArray) {
+            array = ((INDArray) obj).toDoubleMatrix();
+        } else {
+            array = new double[rows][cols];
+            for (int i=0; i<rows; i++) {
+                for (int j=0; j<cols; j++) {
+                    array[i][j] = (double) obj;
+                }
+            }
+        }
+        return array;
     }
 
     private static boolean hasNan(final INDArray array) {
@@ -236,7 +287,7 @@ public class ArrayUtils {
         return range(startInclusive, endExclusive, step, num -> num);
     }
 
-    public static List<Double> range(double startInclusive, double endExclusive, double step, RangeTransform transform) {
+    public static List<Double> range(double startInclusive, double endExclusive, double step, Function<Double, Double> transform) {
         List<Double> range = new ArrayList<>();
         IntStream.range(0, (int) ((endExclusive-startInclusive)/step))
                 .mapToDouble(x -> transform.apply(x * step + startInclusive)).forEach(range::add);
@@ -252,7 +303,7 @@ public class ArrayUtils {
         return rangeClosed(startInclusive, endExclusive, step, num -> num);
     }
 
-    public static List<Double> rangeClosed(double startInclusive, double endInclusive, double step, RangeTransform transform) {
+    public static List<Double> rangeClosed(double startInclusive, double endInclusive, double step, Function<Double, Double> transform) {
         List<Double> range = new ArrayList<>();
         IntStream.rangeClosed(0, (int) ((endInclusive-startInclusive)/step))
                 .mapToDouble(x -> transform.apply(x * step + startInclusive)).forEach(range::add);
@@ -368,6 +419,19 @@ public class ArrayUtils {
             }
         }
         return (numerator / count) / Math.pow(denominator / count, 2) - 3;
+    }
+
+    public static double ema(final double[] array, int n) {
+//        double ema = array[0];
+//        for (int i=1; i<n; i++) {
+//            ema = (2 * array[i] + (i + 1 - 1) * ema) / (i + 1 + 1);
+//        }
+//        return ema;
+        if (n <= 1) {
+            return array[n - 1];
+        } else {
+            return (2 * array[n - 1] + (n - 1) * ema(array, n - 1)) / (n + 1);
+        }
     }
 
     public static boolean isValid(double number) {

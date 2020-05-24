@@ -1,6 +1,6 @@
 package com.range.stcfactor.signal.data;
 
-import com.range.stcfactor.expression.ExpVariables;
+import com.range.stcfactor.expression.constant.ExpVariables;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import java.util.Date;

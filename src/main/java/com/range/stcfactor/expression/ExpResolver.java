@@ -1,5 +1,8 @@
 package com.range.stcfactor.expression;
 
+import com.range.stcfactor.expression.constant.ExpFunctionSymbol;
+import com.range.stcfactor.expression.constant.ExpPrintFormat;
+import com.range.stcfactor.expression.constant.ExpVariables;
 import com.range.stcfactor.expression.tree.ExpModel;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.expression.tree.ExpTreeNode;
@@ -84,6 +87,9 @@ public class ExpResolver {
             List<String> childNodeStrs = splitParameters(expStr.substring(left));
             List<ExpTreeNode<ExpModel>> childNodes = new ArrayList<>();
             for (String childNodeStr : childNodeStrs) {
+                if (childNodeStr.isEmpty()) {
+                    continue;
+                }
                 childNodes.add(resolveNode(childNodeStr));
             }
             node.setData(getFunction(expStr.substring(0, left)));
@@ -164,28 +170,27 @@ public class ExpResolver {
     }
 
     private static ExpModel getFunction(String functionName) {
-        String methodName = null;
-        Class[] parametersType = null;
-        Class returnType = null;
+        Method method = null;
         try {
-            Method method = methods.get(functionName);
-            methodName = method.getName();
-            parametersType = method.getParameterTypes();
-            returnType = method.getReturnType();
+            method = methods.get(functionName);
         } catch (Exception e) {
             logger.error("Get function: [{}] error.", functionName, e);
         }
-        return new ExpModel(methodName, parametersType, returnType);
+        return new ExpModel(method);
     }
 
     private static ExpModel getVariable(String variableName) {
-        Class returnType;
+        Object data;
         try {
-            returnType = ExpVariables.valueOf(variableName.toUpperCase()).getType();
+            data = ExpVariables.valueOf(variableName.toUpperCase());
         } catch (Exception e) {
-            returnType = ExpVariables.DAY_NUM.getType();
+            if (variableName.contains(".")) {
+                data = Double.valueOf(variableName);
+            } else {
+                data = Integer.valueOf(variableName);
+            }
         }
-        return new ExpModel(variableName, null, returnType);
+        return new ExpModel(data);
     }
 
 }

@@ -1,10 +1,9 @@
 package com.range.stcfactor.signal;
 
 import com.range.stcfactor.common.Constant;
-import com.range.stcfactor.common.helper.ICTransform;
 import com.range.stcfactor.common.utils.ArrayUtils;
 import com.range.stcfactor.common.utils.FormatUtils;
-import com.range.stcfactor.expression.ExpMode;
+import com.range.stcfactor.expression.constant.ExpMode;
 import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.data.DataScreen;
 import org.apache.commons.collections4.CollectionUtils;
@@ -20,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * @author zrj5865@163.com
@@ -78,7 +78,7 @@ public class SignalFilter {
                 || !calTotalStd(screen)                         // 每天所有因子的标准差
                 || !calTotalKurtosis(screen)                    // 每天所有因子的峰度
                 || !calTotalIC(screen)                          // 总共的IC
-                || !calGroupIC(screen)                          // 每天分组IC的均值
+//                || !calGroupIC(screen)                          // 每天分组IC的均值
                 || !calDayTr(screen)                            // 每天换手率的均值
                 || !calMutualIC(screen, this.factorHistory)) {  // 与已有expression的IC
             return screen;
@@ -305,7 +305,7 @@ public class SignalFilter {
         return effect / (factor.rows() * factor.columns() - invalid);
     }
 
-    private double calculateIC(INDArray factor, INDArray comparer, ICTransform transform) {
+    private double calculateIC(INDArray factor, INDArray comparer, BiFunction<INDArray, INDArray, Double> transform) {
         List<Double> ics = new ArrayList<>();
         int columns = factor.columns();
         int factorRows = factor.rows();

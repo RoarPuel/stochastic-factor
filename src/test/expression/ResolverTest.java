@@ -1,8 +1,9 @@
 package expression;
 
-import com.range.stcfactor.expression.ExpPrintFormat;
+import com.range.stcfactor.expression.constant.ExpPrintFormat;
 import com.range.stcfactor.expression.ExpResolver;
 import com.range.stcfactor.expression.tree.ExpTree;
+import org.junit.Test;
 
 /**
  * @author zrj5865@163.com
@@ -10,7 +11,8 @@ import com.range.stcfactor.expression.tree.ExpTree;
  */
 public class ResolverTest {
 
-    public static void main(String[] args) {
+    @Test
+    public void test() {
         String expStr = "(((tsSum(share, day_num) / share) * ((open - low) * vol)) - (close + tsSum(std(close, day_num), day_num)))";
         ExpTree expression = ExpResolver.analysis(expStr, ExpPrintFormat.UPPER);
         System.out.println(expression);

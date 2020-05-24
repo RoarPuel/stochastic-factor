@@ -1,4 +1,4 @@
-package com.range.stcfactor.expression;
+package com.range.stcfactor.expression.constant;
 
 /**
  * 打印格式
