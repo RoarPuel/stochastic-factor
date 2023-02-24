@@ -6,8 +6,8 @@ import com.range.stcfactor.expression.tree.ExpTree;
 import com.range.stcfactor.signal.SignalGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.nd4j.jita.conf.CudaEnvironment;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -26,6 +26,8 @@ public class AppLauncher {
     private static final Logger logger = LogManager.getLogger(AppLauncher.class);
 
     public static void main(String[] args) {
+        CudaEnvironment.getInstance().getConfiguration().allowMultiGPU(true);
+
         String configPath = Constant.DEFAULT_CONFIG_PATH;
         if (args.length > 0) {
             configPath = args[0];
@@ -55,8 +57,8 @@ public class AppLauncher {
         SignalGenerator signalGenerator = new SignalGenerator(config);
 
         int index = 0;
-        List<Integer> parts = getParts(Integer.valueOf(config.getProperty(Constant.EXP_TOTAL)),
-                                        Integer.valueOf(config.getProperty(Constant.EXP_SPLIT)));
+        List<Integer> parts = getParts(Integer.parseInt(config.getProperty(Constant.EXP_TOTAL)),
+                                        Integer.parseInt(config.getProperty(Constant.EXP_SPLIT)));
         for (int part : parts) {
             logger.info("=================================== Run {} time. ===================================", ++index);
 
@@ -73,7 +75,7 @@ public class AppLauncher {
     private static Properties initConfig(String configPath) {
         Properties config = new Properties();
         try {
-            InputStream inputStream = new FileInputStream(new File(configPath));
+            InputStream inputStream = new FileInputStream(configPath);
             config.load(inputStream);
         } catch (Exception e) {
             logger.error("load properties error: {}", e.getMessage());

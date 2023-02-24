@@ -20,9 +20,10 @@
         <fastjson.version>1.2.58</fastjson.version>
         <opencsv.version>4.6</opencsv.version>
 
-<!--        <nd4j.backend>nd4j-cuda-9.2-platform</nd4j.backend>-->
-        <nd4j.backend>nd4j-native-platform</nd4j.backend>
-        <nd4j.version>1.0.0-beta5</nd4j.version>
+<!--        <nd4j.backend>nd4j-native-platform</nd4j.backend>-->
+        <nd4j.backend>nd4j-cuda-11.6</nd4j.backend>
+<!--        <nd4j.backend>nd4j-native</nd4j.backend>-->
+        <nd4j.version>1.0.0-M2.1</nd4j.version>
     </properties>
 
     <dependencies>

@@ -11,8 +11,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 public class Constant {
 
     public static final String DEFAULT_CONFIG_PATH = "D:\\Work\\Project\\Java\\stochastic-factor\\data\\config.properties";
-    public static final Class DEFAULT_TYPE = INDArray.class;
-    public static final Class DEFAULT_TYPES = INDArray[].class;
+    public static final Class<INDArray> DEFAULT_TYPE = INDArray.class;
+    public static final Class<INDArray[]> DEFAULT_TYPES = INDArray[].class;
 
     public static final String THREAD_PARALLEL = "thread.parallel";
     public static final String DEFAULT_THREAD_PARALLEL = String.valueOf(Runtime.getRuntime().availableProcessors());
